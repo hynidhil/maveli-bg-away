@@ -1,44 +1,58 @@
 
 import React, { useState, useRef } from 'react';
-import { Upload, Loader, Download, Image as ImageIcon } from 'lucide-react';
+import { Upload, Loader, Download, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
 
 const ImageUploader = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [processedImage, setProcessedImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
+      setUploadedFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         setUploadedImage(e.target?.result as string);
-        setProcessedImage(null); // Reset processed image when new image is uploaded
+        setProcessedImage(null);
+        setError(null);
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleRemoveBackground = async () => {
-    if (!uploadedImage) return;
+    if (!uploadedFile) return;
     
     setIsProcessing(true);
+    setError(null);
     
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // For demo purposes, we'll use a placeholder or the same image with some visual effect
-    // In a real app, this would be the AI-processed image
-    setProcessedImage(uploadedImage);
-    setIsProcessing(false);
+    try {
+      console.log('Loading image for processing...');
+      const imageElement = await loadImage(uploadedFile);
+      console.log('Image loaded, starting background removal...');
+      
+      const processedBlob = await removeBackground(imageElement);
+      const processedUrl = URL.createObjectURL(processedBlob);
+      
+      setProcessedImage(processedUrl);
+      console.log('Background removal completed successfully');
+    } catch (err) {
+      console.error('Error during background removal:', err);
+      setError(err instanceof Error ? err.message : 'Failed to remove background');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleDownload = () => {
     if (!processedImage) return;
     
-    // Create a download link
     const link = document.createElement('a');
     link.href = processedImage;
     link.download = 'background-removed-image.png';
@@ -88,6 +102,14 @@ const ImageUploader = () => {
         )}
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-center space-x-2">
+          <AlertCircle className="w-5 h-5 text-destructive" />
+          <p className="text-destructive">{error}</p>
+        </div>
+      )}
+
       {/* Image Preview and Processing */}
       {uploadedImage && (
         <div className="grid md:grid-cols-2 gap-8">
@@ -111,6 +133,7 @@ const ImageUploader = () => {
                 <div className="flex flex-col items-center space-y-4">
                   <Loader className="w-8 h-8 text-green-500 animate-spin" />
                   <p className="text-muted-foreground">Removing background...</p>
+                  <p className="text-sm text-muted-foreground">This may take a moment</p>
                 </div>
               ) : processedImage ? (
                 <div className="relative">
