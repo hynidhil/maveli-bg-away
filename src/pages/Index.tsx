@@ -3,11 +3,13 @@ import React from 'react';
 import Header from '@/components/Header';
 import ImageUploader from '@/components/ImageUploader';
 import Footer from '@/components/Footer';
+import PremiumStatus from '@/components/PremiumStatus';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
+      <PremiumStatus />
       
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">

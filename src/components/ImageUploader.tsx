@@ -1,8 +1,11 @@
 
 import React, { useState, useRef } from 'react';
-import { Upload, Loader, Download, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Upload, Loader, Download, Image as ImageIcon, AlertCircle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
+import ManualEditor from '@/components/ManualEditor';
+import BackgroundEffects from '@/components/BackgroundEffects';
+import PremiumModal from '@/components/PremiumModal';
 
 const ImageUploader = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -10,7 +13,13 @@ const ImageUploader = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [showManualEditor, setShowManualEditor] = useState(false);
+  const [showBackgroundEffects, setShowBackgroundEffects] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if user is premium
+  const isPremium = localStorage.getItem('isPremium') === 'true';
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -21,6 +30,8 @@ const ImageUploader = () => {
         setUploadedImage(e.target?.result as string);
         setProcessedImage(null);
         setError(null);
+        setShowManualEditor(false);
+        setShowBackgroundEffects(false);
       };
       reader.readAsDataURL(file);
     }
@@ -50,16 +61,52 @@ const ImageUploader = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = (isHD = false) => {
     if (!processedImage) return;
+    
+    if (isHD && !isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
     
     const link = document.createElement('a');
     link.href = processedImage;
-    link.download = 'background-removed-image.png';
+    link.download = isHD ? 'background-removed-hd.png' : 'background-removed-image.png';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
+
+  const handleManualEditComplete = (editedImageUrl: string) => {
+    setProcessedImage(editedImageUrl);
+    setShowManualEditor(false);
+  };
+
+  const handleBackgroundEffectApplied = (imageWithBackground: string) => {
+    setProcessedImage(imageWithBackground);
+    setShowBackgroundEffects(false);
+  };
+
+  if (showManualEditor && uploadedImage) {
+    return (
+      <ManualEditor
+        imageUrl={uploadedImage}
+        onComplete={handleManualEditComplete}
+        onCancel={() => setShowManualEditor(false)}
+      />
+    );
+  }
+
+  if (showBackgroundEffects && processedImage) {
+    return (
+      <BackgroundEffects
+        processedImageUrl={processedImage}
+        originalImageUrl={uploadedImage}
+        onApply={handleBackgroundEffectApplied}
+        onCancel={() => setShowBackgroundEffects(false)}
+      />
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 space-y-8">
@@ -115,7 +162,17 @@ const ImageUploader = () => {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Original Image */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-center text-foreground">Original Image</h3>
+            <div className="flex items-center justify-center space-x-2">
+              <h3 className="text-lg font-semibold text-foreground">Original Image</h3>
+              <Button
+                onClick={() => setShowManualEditor(true)}
+                variant="outline"
+                size="sm"
+                className="border-green-500 text-green-500 hover:bg-green-500/10"
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </div>
             <div className="relative bg-card rounded-lg p-4 border">
               <img
                 src={uploadedImage}
@@ -181,17 +238,41 @@ const ImageUploader = () => {
             )}
           </Button>
           
+          {processedImage && (
+            <Button
+              onClick={() => setShowBackgroundEffects(true)}
+              variant="outline"
+              className="border-green-500 text-green-500 hover:bg-green-500/10 px-8 py-2"
+            >
+              Background Effects
+            </Button>
+          )}
+          
           <Button
-            onClick={handleDownload}
+            onClick={() => handleDownload(false)}
             disabled={!processedImage || isProcessing}
             variant="outline"
             className="border-green-500 text-green-500 hover:bg-green-500/10 px-8 py-2"
           >
             <Download className="w-4 h-4 mr-2" />
-            Download Result
+            Download
+          </Button>
+
+          <Button
+            onClick={() => handleDownload(true)}
+            disabled={!processedImage || isProcessing}
+            className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-8 py-2"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {isPremium ? 'Download HD' : 'Download HD (Premium)'}
           </Button>
         </div>
       )}
+
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+      />
     </div>
   );
 };
