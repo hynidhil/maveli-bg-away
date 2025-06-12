@@ -94,6 +94,14 @@ const ImageUploader = () => {
     setShowBackgroundEffects(false);
   };
 
+  const handleBackgroundEffectsClick = () => {
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
+    setShowBackgroundEffects(true);
+  };
+
   if (showManualEditor && uploadedImage) {
     return (
       <ManualEditor
@@ -248,11 +256,18 @@ const ImageUploader = () => {
           
           {processedImage && (
             <Button
-              onClick={() => setShowBackgroundEffects(true)}
+              onClick={handleBackgroundEffectsClick}
               variant="outline"
-              className="border-green-500 text-green-500 hover:bg-green-500/10 px-8 py-2"
+              className={`px-8 py-2 ${isPremium ? 'border-green-500 text-green-500 hover:bg-green-500/10' : 'border-yellow-500 text-yellow-500 hover:bg-yellow-500/10'}`}
             >
-              Background Effects
+              {isPremium ? (
+                'Background Effects'
+              ) : (
+                <>
+                  <Crown className="w-4 h-4 mr-2" />
+                  Background Effects (Premium)
+                </>
+              )}
             </Button>
           )}
           

@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Undo, Redo, Save, X } from 'lucide-react';
+import { Undo, Redo, Save, X, Trash2 } from 'lucide-react';
 
 interface ManualEditorProps {
   imageUrl: string;
@@ -11,22 +11,29 @@ interface ManualEditorProps {
 
 const ManualEditor: React.FC<ManualEditorProps> = ({ imageUrl, onComplete, onCancel }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [brushSize, setBrushSize] = useState(20);
   const [history, setHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [selectedAreas, setSelectedAreas] = useState<ImageData | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const overlayCanvas = overlayCanvasRef.current;
+    if (!canvas || !overlayCanvas) return;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const overlayCtx = overlayCanvas.getContext('2d');
+    if (!ctx || !overlayCtx) return;
 
     const img = new Image();
     img.onload = () => {
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
+      overlayCanvas.width = img.naturalWidth;
+      overlayCanvas.height = img.naturalHeight;
+      
       ctx.drawImage(img, 0, 0);
       
       // Save initial state to history
@@ -77,35 +84,93 @@ const ManualEditor: React.FC<ManualEditorProps> = ({ imageUrl, onComplete, onCan
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
-    erase(e);
+    drawSelection(e);
   };
 
-  const erase = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const drawSelection = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const overlayCanvas = overlayCanvasRef.current;
+    if (!overlayCanvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const overlayCtx = overlayCanvas.getContext('2d');
+    if (!overlayCtx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    const rect = overlayCanvas.getBoundingClientRect();
+    const scaleX = overlayCanvas.width / rect.width;
+    const scaleY = overlayCanvas.height / rect.height;
     
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
 
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.beginPath();
-    ctx.arc(x, y, brushSize, 0, 2 * Math.PI);
-    ctx.fill();
+    // Draw selection overlay in red with transparency
+    overlayCtx.globalCompositeOperation = 'source-over';
+    overlayCtx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+    overlayCtx.beginPath();
+    overlayCtx.arc(x, y, brushSize, 0, 2 * Math.PI);
+    overlayCtx.fill();
   };
 
   const stopDrawing = () => {
     if (isDrawing) {
       setIsDrawing(false);
-      saveToHistory();
+      // Save the overlay as selected areas
+      const overlayCanvas = overlayCanvasRef.current;
+      if (overlayCanvas) {
+        const overlayCtx = overlayCanvas.getContext('2d');
+        if (overlayCtx) {
+          const overlayData = overlayCtx.getImageData(0, 0, overlayCanvas.width, overlayCanvas.height);
+          setSelectedAreas(overlayData);
+        }
+      }
+    }
+  };
+
+  const removeSelectedAreas = () => {
+    const canvas = canvasRef.current;
+    const overlayCanvas = overlayCanvasRef.current;
+    if (!canvas || !overlayCanvas || !selectedAreas) return;
+
+    const ctx = canvas.getContext('2d');
+    const overlayCtx = overlayCanvas.getContext('2d');
+    if (!ctx || !overlayCtx) return;
+
+    // Get current canvas data
+    const canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const canvasPixels = canvasData.data;
+    const overlayPixels = selectedAreas.data;
+
+    // Remove pixels where overlay has red color
+    for (let i = 0; i < overlayPixels.length; i += 4) {
+      const red = overlayPixels[i];
+      const alpha = overlayPixels[i + 3];
+      
+      // If there's red color in overlay (selected area)
+      if (red > 0 && alpha > 0) {
+        // Make corresponding canvas pixel transparent
+        canvasPixels[i + 3] = 0;
+      }
+    }
+
+    // Apply the changes
+    ctx.putImageData(canvasData, 0, 0);
+    
+    // Clear overlay
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    setSelectedAreas(null);
+    
+    // Save to history
+    saveToHistory();
+  };
+
+  const clearSelection = () => {
+    const overlayCanvas = overlayCanvasRef.current;
+    if (!overlayCanvas) return;
+
+    const overlayCtx = overlayCanvas.getContext('2d');
+    if (overlayCtx) {
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+      setSelectedAreas(null);
     }
   };
 
@@ -168,6 +233,26 @@ const ManualEditor: React.FC<ManualEditorProps> = ({ imageUrl, onComplete, onCan
           </Button>
         </div>
 
+        {selectedAreas && (
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={removeSelectedAreas}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              size="sm"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Remove Selected Areas
+            </Button>
+            <Button
+              onClick={clearSelection}
+              variant="outline"
+              size="sm"
+            >
+              Clear Selection
+            </Button>
+          </div>
+        )}
+
         <Button
           onClick={handleSave}
           className="bg-green-600 hover:bg-green-700 text-white"
@@ -179,16 +264,21 @@ const ManualEditor: React.FC<ManualEditorProps> = ({ imageUrl, onComplete, onCan
 
       <div className="text-center">
         <p className="text-muted-foreground mb-4">
-          Click and drag to erase the background. Use the brush size slider to adjust the eraser size.
+          Brush over areas you want to remove (shown in red), then click "Remove Selected Areas" to delete them.
         </p>
         <div className="relative inline-block">
           <canvas
             ref={canvasRef}
+            className="max-w-full h-auto border rounded-lg absolute"
+            style={{ maxHeight: '70vh' }}
+          />
+          <canvas
+            ref={overlayCanvasRef}
             onMouseDown={startDrawing}
-            onMouseMove={erase}
+            onMouseMove={drawSelection}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
-            className="max-w-full h-auto border rounded-lg cursor-crosshair"
+            className="max-w-full h-auto border rounded-lg cursor-crosshair relative z-10"
             style={{ maxHeight: '70vh' }}
           />
         </div>
