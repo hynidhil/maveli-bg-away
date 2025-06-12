@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Crown, Check, X } from 'lucide-react';
+import { Crown, Check, X, Sparkles } from 'lucide-react';
 
 interface PremiumModalProps {
   isOpen: boolean;
@@ -55,8 +55,9 @@ const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) => {
         setIsProcessing(false);
         onClose();
         
-        // Show success message
+        // Show success message and reload to update premium status
         alert('Payment successful! You now have premium access for 2 months.');
+        window.location.reload();
       },
       prefill: {
         name: 'User',
@@ -77,11 +78,11 @@ const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) => {
   };
 
   const features = [
-    'High-resolution downloads (up to 4K)',
-    'No watermarks',
-    'Priority processing',
-    'Advanced background effects',
-    'Batch processing support',
+    'HD downloads (up to 4K resolution)',
+    'Remove watermarks completely',
+    'Full access to manual brush tool',
+    'Premium background effects',
+    'Priority processing speed',
     '2 months of premium access'
   ];
 
@@ -91,12 +92,16 @@ const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Crown className="w-6 h-6 text-yellow-500" />
-            Upgrade to Premium
+            Premium Feature 🔒
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
-          <div className="text-center">
+          <div className="text-center bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200">
+            <Sparkles className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
+            <p className="text-sm text-gray-700 mb-2">
+              <strong>Upgrade for HD download & watermark-free images!</strong>
+            </p>
             <div className="text-3xl font-bold text-green-600">₹9</div>
             <div className="text-muted-foreground">for 2 months</div>
           </div>
@@ -116,7 +121,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) => {
           <div className="bg-green-50 p-4 rounded-lg border border-green-200">
             <p className="text-sm text-green-800">
               <strong>Special Offer:</strong> Get 2 months of premium access for just ₹9! 
-              Unlock HD downloads and advanced features.
+              Unlock HD downloads and remove watermarks from all your images.
             </p>
           </div>
 
@@ -132,7 +137,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) => {
             <Button
               onClick={handlePayment}
               disabled={isProcessing}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
             >
               <Crown className="w-4 h-4 mr-2" />
               {isProcessing ? 'Processing...' : 'Upgrade Now'}

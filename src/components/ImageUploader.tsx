@@ -1,8 +1,8 @@
-
 import React, { useState, useRef } from 'react';
-import { Upload, Loader, Download, Image as ImageIcon, AlertCircle, Pencil } from 'lucide-react';
+import { Upload, Loader, Download, Image as ImageIcon, AlertCircle, Pencil, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
+import { addWatermarkToImage } from '@/utils/watermarkUtils';
 import ManualEditor from '@/components/ManualEditor';
 import BackgroundEffects from '@/components/BackgroundEffects';
 import PremiumModal from '@/components/PremiumModal';
@@ -61,7 +61,7 @@ const ImageUploader = () => {
     }
   };
 
-  const handleDownload = (isHD = false) => {
+  const handleDownload = async (isHD = false) => {
     if (!processedImage) return;
     
     if (isHD && !isPremium) {
@@ -69,8 +69,15 @@ const ImageUploader = () => {
       return;
     }
     
+    let downloadUrl = processedImage;
+    
+    // Add watermark for free users on regular downloads
+    if (!isPremium && !isHD) {
+      downloadUrl = await addWatermarkToImage(processedImage);
+    }
+    
     const link = document.createElement('a');
-    link.href = processedImage;
+    link.href = downloadUrl;
     link.download = isHD ? 'background-removed-hd.png' : 'background-removed-image.png';
     document.body.appendChild(link);
     link.click();
@@ -169,6 +176,7 @@ const ImageUploader = () => {
                 variant="outline"
                 size="sm"
                 className="border-green-500 text-green-500 hover:bg-green-500/10"
+                title="Manual editing tool"
               >
                 <Pencil className="w-4 h-4" />
               </Button>
@@ -255,7 +263,7 @@ const ImageUploader = () => {
             className="border-green-500 text-green-500 hover:bg-green-500/10 px-8 py-2"
           >
             <Download className="w-4 h-4 mr-2" />
-            Download
+            Download {!isPremium && '(with watermark)'}
           </Button>
 
           <Button
@@ -263,8 +271,17 @@ const ImageUploader = () => {
             disabled={!processedImage || isProcessing}
             className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-8 py-2"
           >
-            <Download className="w-4 h-4 mr-2" />
-            {isPremium ? 'Download HD' : 'Download HD (Premium)'}
+            {isPremium ? (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Download HD
+              </>
+            ) : (
+              <>
+                <Crown className="w-4 h-4 mr-2" />
+                HD Download (Premium)
+              </>
+            )}
           </Button>
         </div>
       )}
