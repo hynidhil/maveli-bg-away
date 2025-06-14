@@ -74,7 +74,7 @@ const BatchImageUploader = () => {
     event.preventDefault();
   };
 
-  const removeBackground = async (imageId: string) => {
+  const processBackgroundRemoval = async (imageId: string) => {
     const image = images.find(img => img.id === imageId);
     if (!image) return;
 
@@ -321,7 +321,7 @@ const BatchImageUploader = () => {
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2">
                 <Button
-                  onClick={() => removeBackground(image.id)}
+                  onClick={() => processBackgroundRemoval(image.id)}
                   disabled={image.isProcessing}
                   size="sm"
                   className="bg-green-600 hover:bg-green-700"
