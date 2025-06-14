@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Undo, Redo, Save, X, Trash2 } from 'lucide-react';
+import { Undo, Redo, Save, X, Trash2, RotateCcw } from 'lucide-react';
 
 interface ManualEditorProps {
   imageUrl: string;
@@ -79,6 +79,18 @@ const ManualEditor: React.FC<ManualEditorProps> = ({ imageUrl, onComplete, onCan
       const newIndex = historyIndex + 1;
       ctx.putImageData(history[newIndex], 0, 0);
       setHistoryIndex(newIndex);
+    }
+  };
+
+  const restoreOriginal = () => {
+    if (history.length > 0) {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) return;
+
+      ctx.putImageData(history[0], 0, 0);
+      setHistoryIndex(0);
+      clearSelection();
     }
   };
 
@@ -189,7 +201,7 @@ const ManualEditor: React.FC<ManualEditorProps> = ({ imageUrl, onComplete, onCan
   return (
     <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Manual Background Removal</h2>
+        <h2 className="text-2xl font-bold">Manual Background Removal Tool</h2>
         <Button
           onClick={onCancel}
           variant="outline"
@@ -231,6 +243,14 @@ const ManualEditor: React.FC<ManualEditorProps> = ({ imageUrl, onComplete, onCan
           >
             <Redo className="w-4 h-4" />
           </Button>
+          <Button
+            onClick={restoreOriginal}
+            variant="outline"
+            size="sm"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Restore Original
+          </Button>
         </div>
 
         {selectedAreas && (
@@ -263,9 +283,12 @@ const ManualEditor: React.FC<ManualEditorProps> = ({ imageUrl, onComplete, onCan
       </div>
 
       <div className="text-center">
-        <p className="text-muted-foreground mb-4">
-          Brush over areas you want to remove (shown in red), then click "Remove Selected Areas" to delete them.
-        </p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <p className="text-blue-800 text-sm">
+            <strong>How to use:</strong> Brush over areas you want to remove (shown in red), 
+            then click "Remove Selected Areas". Use undo/redo to fine-tune your edits.
+          </p>
+        </div>
         <div className="relative inline-block">
           <canvas
             ref={canvasRef}

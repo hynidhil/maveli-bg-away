@@ -1,11 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Loader, Download, Image as ImageIcon, AlertCircle, Pencil, Crown } from 'lucide-react';
+import { Upload, Loader, Download, Image as ImageIcon, AlertCircle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
-import { addWatermarkToImage } from '@/utils/watermarkUtils';
 import ManualEditor from '@/components/ManualEditor';
 import BackgroundEffects from '@/components/BackgroundEffects';
-import PremiumModal from '@/components/PremiumModal';
 
 const ImageUploader = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -15,11 +13,8 @@ const ImageUploader = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showManualEditor, setShowManualEditor] = useState(false);
   const [showBackgroundEffects, setShowBackgroundEffects] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Check if user is premium
-  const isPremium = localStorage.getItem('isPremium') === 'true';
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -32,9 +27,32 @@ const ImageUploader = () => {
         setError(null);
         setShowManualEditor(false);
         setShowBackgroundEffects(false);
+        setShowComparison(false);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setUploadedFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadedImage(e.target?.result as string);
+        setProcessedImage(null);
+        setError(null);
+        setShowManualEditor(false);
+        setShowBackgroundEffects(false);
+        setShowComparison(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
   };
 
   const handleRemoveBackground = async () => {
@@ -61,27 +79,50 @@ const ImageUploader = () => {
     }
   };
 
-  const handleDownload = async (isHD = false) => {
-    if (!processedImage) return;
-    
-    if (isHD && !isPremium) {
-      setShowPremiumModal(true);
-      return;
-    }
-    
-    let downloadUrl = processedImage;
-    
-    // Add watermark for free users on regular downloads
-    if (!isPremium && !isHD) {
-      downloadUrl = await addWatermarkToImage(processedImage);
-    }
-    
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = isHD ? 'background-removed-hd.png' : 'background-removed-image.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const downloadImage = (imageUrl: string, quality: 'low' | 'medium' | 'high') => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      let width = img.naturalWidth;
+      let height = img.naturalHeight;
+
+      // Adjust resolution based on quality
+      switch (quality) {
+        case 'low':
+          width = Math.min(width, 800);
+          height = Math.min(height, 600);
+          break;
+        case 'medium':
+          width = Math.min(width, 1920);
+          height = Math.min(height, 1080);
+          break;
+        case 'high':
+          // Keep original resolution
+          break;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Get estimated file size
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `background-removed-${quality}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/png');
+    };
+    img.src = imageUrl;
   };
 
   const handleManualEditComplete = (editedImageUrl: string) => {
@@ -94,12 +135,21 @@ const ImageUploader = () => {
     setShowBackgroundEffects(false);
   };
 
-  const handleBackgroundEffectsClick = () => {
-    if (!isPremium) {
-      setShowPremiumModal(true);
-      return;
+  const resetAll = () => {
+    setUploadedImage(null);
+    setProcessedImage(null);
+    setUploadedFile(null);
+    setError(null);
+    setShowComparison(false);
+  };
+
+  const getEstimatedFileSize = (quality: string) => {
+    switch (quality) {
+      case 'low': return '~200KB';
+      case 'medium': return '~1MB';
+      case 'high': return '~3MB';
+      default: return '';
     }
-    setShowBackgroundEffects(true);
   };
 
   if (showManualEditor && uploadedImage) {
@@ -139,6 +189,8 @@ const ImageUploader = () => {
           <div 
             className="border-2 border-dashed border-green-500/30 rounded-lg p-12 cursor-pointer hover:border-green-500/50 transition-colors"
             onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
           >
             <div className="flex flex-col items-center space-y-4">
               <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center">
@@ -159,6 +211,13 @@ const ImageUploader = () => {
             >
               <Upload className="w-4 h-4 mr-2" />
               Upload New Image
+            </Button>
+            <Button
+              onClick={resetAll}
+              variant="outline"
+              className="ml-2"
+            >
+              Reset All
             </Button>
           </div>
         )}
@@ -200,17 +259,27 @@ const ImageUploader = () => {
 
           {/* Processed Image */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-center text-foreground">Processed Image</h3>
+            <div className="flex items-center justify-center space-x-2">
+              <h3 className="text-lg font-semibold text-foreground">Processed Image</h3>
+              {processedImage && (
+                <Button
+                  onClick={() => setShowComparison(!showComparison)}
+                  variant="outline"
+                  size="sm"
+                >
+                  {showComparison ? 'Show Processed' : 'Compare Before/After'}
+                </Button>
+              )}
+            </div>
             <div className="relative bg-card rounded-lg p-4 border min-h-[200px] flex items-center justify-center">
               {isProcessing ? (
                 <div className="flex flex-col items-center space-y-4">
                   <Loader className="w-8 h-8 text-green-500 animate-spin" />
-                  <p className="text-muted-foreground">Removing background...</p>
-                  <p className="text-sm text-muted-foreground">This may take a moment</p>
+                  <p className="text-muted-foreground">Removing background...using advanced AI</p>
+                  <p className="text-sm text-muted-foreground">Processing fine details like hair and edges</p>
                 </div>
               ) : processedImage ? (
                 <div className="relative">
-                  {/* Checkered background to show transparency */}
                   <div 
                     className="absolute inset-0 opacity-20"
                     style={{
@@ -220,7 +289,7 @@ const ImageUploader = () => {
                     }}
                   />
                   <img
-                    src={processedImage}
+                    src={showComparison ? uploadedImage : processedImage}
                     alt="Processed"
                     className="w-full h-auto max-h-96 object-contain rounded-lg relative z-10"
                   />
@@ -256,55 +325,64 @@ const ImageUploader = () => {
           
           {processedImage && (
             <Button
-              onClick={handleBackgroundEffectsClick}
+              onClick={() => setShowBackgroundEffects(true)}
               variant="outline"
-              className={`px-8 py-2 ${isPremium ? 'border-green-500 text-green-500 hover:bg-green-500/10' : 'border-yellow-500 text-yellow-500 hover:bg-yellow-500/10'}`}
+              className="border-green-500 text-green-500 hover:bg-green-500/10 px-8 py-2"
             >
-              {isPremium ? (
-                'Background Effects'
-              ) : (
-                <>
-                  <Crown className="w-4 h-4 mr-2" />
-                  Background Effects (Premium)
-                </>
-              )}
+              Background Effects
             </Button>
           )}
-          
-          <Button
-            onClick={() => handleDownload(false)}
-            disabled={!processedImage || isProcessing}
-            variant="outline"
-            className="border-green-500 text-green-500 hover:bg-green-500/10 px-8 py-2"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download {!isPremium && '(with watermark)'}
-          </Button>
-
-          <Button
-            onClick={() => handleDownload(true)}
-            disabled={!processedImage || isProcessing}
-            className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-8 py-2"
-          >
-            {isPremium ? (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                Download HD
-              </>
-            ) : (
-              <>
-                <Crown className="w-4 h-4 mr-2" />
-                HD Download (Premium)
-              </>
-            )}
-          </Button>
         </div>
       )}
 
-      <PremiumModal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-      />
+      {/* Download Options */}
+      {processedImage && (
+        <div className="bg-card rounded-lg p-6 border">
+          <h3 className="text-lg font-semibold mb-4 text-center">Download Options</h3>
+          <div className="grid sm:grid-cols-3 gap-4">
+            <div className="text-center space-y-2">
+              <p className="font-medium">Low Quality</p>
+              <p className="text-sm text-muted-foreground">800x600px</p>
+              <p className="text-sm text-muted-foreground">{getEstimatedFileSize('low')}</p>
+              <Button
+                onClick={() => downloadImage(processedImage, 'low')}
+                variant="outline"
+                className="w-full"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </div>
+            
+            <div className="text-center space-y-2">
+              <p className="font-medium">Medium Quality</p>
+              <p className="text-sm text-muted-foreground">1920x1080px</p>
+              <p className="text-sm text-muted-foreground">{getEstimatedFileSize('medium')}</p>
+              <Button
+                onClick={() => downloadImage(processedImage, 'medium')}
+                variant="outline"
+                className="w-full"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </div>
+            
+            <div className="text-center space-y-2">
+              <p className="font-medium">High Quality</p>
+              <p className="text-sm text-muted-foreground">Original Size</p>
+              <p className="text-sm text-muted-foreground">{getEstimatedFileSize('high')}</p>
+              <Button
+                onClick={() => downloadImage(processedImage, 'high')}
+                className="bg-green-600 hover:bg-green-700 w-full"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download HD
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

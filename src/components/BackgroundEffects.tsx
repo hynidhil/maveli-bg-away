@@ -19,6 +19,8 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
   const [selectedEffect, setSelectedEffect] = useState<string>('white');
   const [customBackground, setCustomBackground] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string>('');
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -50,7 +52,6 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Load the processed image
     const processedImg = new Image();
     processedImg.crossOrigin = 'anonymous';
     
@@ -70,12 +71,12 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
             const originalImg = new Image();
             originalImg.crossOrigin = 'anonymous';
             originalImg.onload = () => {
-              // Draw blurred original image
               ctx.filter = 'blur(20px)';
               ctx.drawImage(originalImg, 0, 0, canvas.width, canvas.height);
               ctx.filter = 'none';
-              // Draw processed image on top
-              ctx.drawImage(processedImg, 0, 0);
+              
+              // Apply drag position for foreground
+              ctx.drawImage(processedImg, dragPosition.x, dragPosition.y);
               setPreviewImage(canvas.toDataURL());
             };
             originalImg.src = originalImageUrl;
@@ -96,7 +97,7 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
           natureImg.crossOrigin = 'anonymous';
           natureImg.onload = () => {
             ctx.drawImage(natureImg, 0, 0, canvas.width, canvas.height);
-            ctx.drawImage(processedImg, 0, 0);
+            ctx.drawImage(processedImg, dragPosition.x, dragPosition.y);
             setPreviewImage(canvas.toDataURL());
           };
           natureImg.src = 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop';
@@ -107,7 +108,7 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
             const customImg = new Image();
             customImg.onload = () => {
               ctx.drawImage(customImg, 0, 0, canvas.width, canvas.height);
-              ctx.drawImage(processedImg, 0, 0);
+              ctx.drawImage(processedImg, dragPosition.x, dragPosition.y);
               setPreviewImage(canvas.toDataURL());
             };
             customImg.src = customBg;
@@ -116,8 +117,8 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
           break;
       }
 
-      // Draw processed image on top
-      ctx.drawImage(processedImg, 0, 0);
+      // Draw processed image on top with drag position
+      ctx.drawImage(processedImg, dragPosition.x, dragPosition.y);
       setPreviewImage(canvas.toDataURL());
     };
 
@@ -131,6 +132,30 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
     } else {
       generatePreview(effectId, customBackground || undefined);
     }
+  };
+
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - 50; // offset for better dragging experience
+    const y = e.clientY - rect.top - 50;
+    
+    setDragPosition({ x, y });
+    generatePreview(selectedEffect, customBackground || undefined);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const resetPosition = () => {
+    setDragPosition({ x: 0, y: 0 });
+    generatePreview(selectedEffect, customBackground || undefined);
   };
 
   const handleApply = () => {
@@ -147,7 +172,7 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Background Effects</h2>
+        <h2 className="text-2xl font-bold">Background Effects - Free for All!</h2>
         <Button onClick={onCancel} variant="outline" size="sm">
           <X className="w-4 h-4 mr-2" />
           Cancel
@@ -207,11 +232,18 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
             className="hidden"
           />
 
-          <div className="flex gap-3 pt-4">
+          <div className="space-y-2">
+            <Button
+              onClick={resetPosition}
+              variant="outline"
+              className="w-full"
+            >
+              Reset Position
+            </Button>
             <Button
               onClick={handleApply}
               disabled={!previewImage}
-              className="bg-green-600 hover:bg-green-700 text-white flex-1"
+              className="bg-green-600 hover:bg-green-700 text-white w-full"
             >
               Apply Background
             </Button>
@@ -220,13 +252,20 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
 
         {/* Preview */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Preview</h3>
-          <div className="relative bg-card rounded-lg p-4 border min-h-[400px] flex items-center justify-center">
+          <h3 className="text-lg font-semibold">Preview (Drag to Reposition)</h3>
+          <div 
+            className="relative bg-card rounded-lg p-4 border min-h-[400px] flex items-center justify-center cursor-move"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
             {previewImage ? (
               <img
                 src={previewImage}
                 alt="Preview"
                 className="max-w-full max-h-96 object-contain rounded-lg"
+                draggable={false}
               />
             ) : (
               <div className="text-muted-foreground">
@@ -234,6 +273,9 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
               </div>
             )}
           </div>
+          <p className="text-sm text-muted-foreground text-center">
+            Click and drag on the preview to reposition the foreground image
+          </p>
         </div>
       </div>
 
