@@ -34,17 +34,21 @@ const ImageGenerator = () => {
       if (!response.ok) {
         let errorMessage = 'Failed to generate image';
         try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
+          const responseText = await response.text();
+          try {
+            const errorData = JSON.parse(responseText);
+            errorMessage = errorData.error || errorMessage;
+          } catch (parseError) {
+            errorMessage = responseText || errorMessage;
+          }
         } catch (jsonError) {
-          // If response is not JSON, read as text
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
+          errorMessage = 'Failed to read error response';
         }
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
+      const data = JSON.parse(responseText);
       
       if (data.imageData) {
         // Convert base64 to blob URL for display
