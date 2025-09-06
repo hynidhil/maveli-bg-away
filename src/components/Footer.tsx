@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <p className="text-muted-foreground text-sm">
-            © 2024 Remove.AI. Built with ❤️ for seamless background removal.
+            © 2024 RemoveMaveli.AI. Built with ❤️ for seamless background removal and AI image generation.
           </p>
         </div>
         
@@ -23,8 +23,8 @@ const Footer = () => {
         <div className="text-center">
           <h3 className="text-lg font-semibold mb-4">Privacy</h3>
           <p className="text-muted-foreground text-sm max-w-2xl mx-auto">
-            Your privacy is important to us. All image processing happens locally in your browser. 
-            We do not store or share your images.
+            Your privacy is important to us. Background removal happens locally in your browser. 
+            Generated images are processed securely and we do not store or share your content.
           </p>
         </div>
       </div>

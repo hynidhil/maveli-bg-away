@@ -1,5 +1,19 @@
 # Welcome to your Lovable project
 
+## RemoveMaveli.AI - AI-Powered Background Removal & Image Generation
+
+A comprehensive AI-powered tool that combines background removal and image generation capabilities.
+
+### Features
+
+- **Background Removal**: Remove backgrounds from images using advanced AI
+- **Batch Processing**: Process multiple images at once (up to 3 images)
+- **Manual Editing**: Fine-tune background removal with manual brush tools
+- **Background Effects**: Add custom backgrounds and effects
+- **AI Image Generation**: Create stunning images from text descriptions using Gemini AI
+- **Multiple Download Qualities**: Low, Medium, and HD quality downloads
+- **Dark Theme**: Modern dark interface with green accent colors
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/071e967c-2029-4c1c-9a3d-39bcebe2b326
@@ -59,6 +73,8 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Hugging Face Transformers.js (for background removal)
+- Google Gemini API (for image generation)
 
 ## How can I deploy this project?
 
