@@ -516,26 +516,3 @@ const Index = () => {
 };
 
 export default Index;
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Main Content */}
-      <section className="section-padding">
-        <div className="container-max">
-          {activeMode === 'single' && <ImageUploader />}
-          {activeMode === 'batch' && <BatchImageUploader />}
-          {activeMode === 'generate' && <ImageGenerator />}
-        </div>
-      </section>
-      
-      <Footer />
-    </div>
-  );
-};
-
-export default Index;
