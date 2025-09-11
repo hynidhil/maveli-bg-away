@@ -37,7 +37,6 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     
     // Use RMBG-1.4 model which is specifically designed for high-quality background removal
     const segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
-      device: 'webgpu',
     });
     
     // Convert HTMLImageElement to canvas
