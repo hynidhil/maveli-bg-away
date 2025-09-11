@@ -70,27 +70,51 @@ const Index = () => {
                   Single Image
                 </Button>
                 <Button
+                  onClick={() => setActiveMode('batch')}
+                  className={`px-6 py-3 text-base font-semibold rounded-full transition-all ${
+                    activeMode === 'batch' 
+                      ? "mode-toggle active" 
+                      : "mode-toggle"
+                  }`}
+                >
+                  <Layers className="w-4 h-4 mr-2" />
+                  Batch Process
+                </Button>
+                <Button
+                  onClick={() => setActiveMode('generate')}
+                  className={`px-6 py-3 text-base font-semibold rounded-full transition-all ${
+                    activeMode === 'generate' 
+                      ? "mode-toggle active" 
+                      : "mode-toggle"
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  AI Generate
+                </Button>
+              </div>
+            </div>
+            
+            {/* Right Side - Preview */}
+            <div className="relative">
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 border border-gray-700">
+                <div className="text-center">
+                  <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    <Upload className="w-16 h-16 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-4">Ready to Start?</h3>
+                  <p className="text-gray-300 mb-6">
+                    Choose your preferred mode and start removing backgrounds from your images.
+                  </p>
+                  <div className="space-y-4">
                     <Button className="btn-primary w-full py-3 text-lg font-semibold rounded-full">
                       Start Creating
                     </Button>
                   </div>
-                ) : (
-      <div className="section-padding">
-        {activeMode === 'single' && (
-          <div className="container-max">
-            <ImageUploader />
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-        {activeMode === 'batch' && (
-          <div className="container-max">
-            <BatchImageUploader />
-          </div>
-        )}
-        {activeMode === 'generate' && (
-          <div className="container-max">
-            <ImageGenerator />
-          </div>
-        )}
+        </div>
       </section>
       
       {/* Main Content */}
