@@ -137,20 +137,6 @@ const Footer = () => {
         </div>
 
         {/* Terms of Service */}
-        <div className="mb-8 md:mb-12">
-          <h3 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6 text-center">Terms of Service</h3>
-          <div className="bg-gray-900 rounded-lg p-6 md:p-8">
-            <div className="space-y-4 text-gray-300 text-sm md:text-base">
-              <p><strong className="text-white">1. Acceptance of Terms:</strong> By using ClearPix, you agree to these terms and conditions.</p>
-              <p><strong className="text-white">2. Service Usage:</strong> Our service is provided for legitimate image editing purposes. Users must not upload inappropriate, copyrighted, or illegal content.</p>
-              <p><strong className="text-white">3. Data Processing:</strong> We process your images to provide background removal services. Images are not stored permanently on our servers.</p>
-              <p><strong className="text-white">4. User Responsibilities:</strong> Users are responsible for ensuring they have the right to edit and modify uploaded images.</p>
-              <p><strong className="text-white">5. Service Availability:</strong> We strive for 99.9% uptime but cannot guarantee uninterrupted service.</p>
-              <p><strong className="text-white">6. Limitation of Liability:</strong> ClearPix is not liable for any damages resulting from the use of our service.</p>
-              <p><strong className="text-white">7. Changes to Terms:</strong> We reserve the right to modify these terms at any time with notice to users.</p>
-            </div>
-          </div>
-        </div>
 
         {/* Privacy Statement */}
         <div className="mb-8 md:mb-12">
