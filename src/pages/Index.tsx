@@ -12,7 +12,7 @@ const Index = () => {
   const [activeMode, setActiveMode] = useState<'single' | 'batch' | 'generate'>('single');
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-black">
       <Header />
       
       {/* Hero Section */}
@@ -21,34 +21,34 @@ const Index = () => {
           <div className="text-center mb-16 relative z-10">
             {activeMode === 'generate' ? (
               <>
-                <h2 className="hero-title text-5xl md:text-7xl text-gray-900 mb-8">
+                <h2 className="hero-title text-5xl md:text-7xl text-white mb-8">
                   Create Amazing Images
-                  <span className="block bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                  <span className="block bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
                     with AI
                   </span>
                 </h2>
-                <p className="hero-subtitle text-xl md:text-2xl max-w-4xl mx-auto mb-12">
+                <p className="hero-subtitle text-xl md:text-2xl max-w-4xl mx-auto mb-12 text-gray-300">
                   Generate stunning, unique images from text descriptions using advanced AI technology. 
                   Perfect for creative projects, social media, and professional use.
                 </p>
               </>
             ) : (
               <>
-                <h2 className="hero-title text-5xl md:text-7xl text-gray-900 mb-8">
+                <h2 className="hero-title text-5xl md:text-7xl text-white mb-8">
                   Remove Image
-                  <span className="block bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                  <span className="block bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
                     Background
                   </span>
                 </h2>
                 <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-                  <span className="feature-badge px-6 py-3 rounded-full text-lg font-semibold text-gray-700">
+                  <span className="feature-badge px-6 py-3 rounded-full text-lg font-semibold text-white">
                     100% Automatically and
                   </span>
-                  <span className="yellow-highlight px-6 py-3 rounded-full text-lg font-bold">
+                  <span className="green-highlight px-6 py-3 rounded-full text-lg font-bold text-green-400">
                     Free
                   </span>
                 </div>
-                <p className="hero-subtitle text-xl md:text-2xl max-w-4xl mx-auto mb-12">
+                <p className="hero-subtitle text-xl md:text-2xl max-w-4xl mx-auto mb-12 text-gray-300">
                   Upload your images and let our advanced AI remove backgrounds instantly. 
                   Perfect for e-commerce, social media, and professional use.
                 </p>
@@ -58,16 +58,16 @@ const Index = () => {
             {/* Features */}
             <div className="flex flex-wrap justify-center gap-6 mb-16">
               <div className="feature-badge flex items-center gap-3 px-6 py-3 rounded-full">
-                <Zap className="w-5 h-5 text-blue-500" />
-                <span className="text-gray-700 font-medium">Lightning Fast</span>
+                <Zap className="w-5 h-5 text-green-500" />
+                <span className="text-white font-medium">Lightning Fast</span>
               </div>
               <div className="feature-badge flex items-center gap-3 px-6 py-3 rounded-full">
                 <Shield className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700 font-medium">100% Secure</span>
+                <span className="text-white font-medium">100% Secure</span>
               </div>
               <div className="feature-badge flex items-center gap-3 px-6 py-3 rounded-full">
-                <Star className="w-5 h-5 text-yellow-500" />
-                <span className="text-gray-700 font-medium">HD Quality</span>
+                <Star className="w-5 h-5 text-green-400" />
+                <span className="text-white font-medium">HD Quality</span>
               </div>
             </div>
             
