@@ -457,9 +457,9 @@ const Index = () => {
               { src: 'https://i.postimg.cc/Xv9qfYy2/imgi-17-person-3.png', alt: 'Person 3' }
             ].map((image, index) => {
               const labels = [
-                '1. Original',
-                '2. Transparent background', 
-                '3. New background'
+                'Original',
+                'Transparent background', 
+                'New background'
               ];
               
               return (
