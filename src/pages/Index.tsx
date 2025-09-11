@@ -146,22 +146,3 @@ const Index = () => {
             </div>
           </div>
         </div>
-      </section>
-      
-      {/* Main Content */}
-      <main className="container-max px-4 pb-20">
-        {activeMode === 'generate' ? (
-          <ImageGenerator />
-        ) : activeMode === 'batch' ? (
-          <BatchImageUploader />
-        ) : (
-          <ImageUploader />
-        )}
-      </main>
-      
-      <Footer />
-    </div>
-  );
-};
-
-export default Index;
