@@ -375,3 +375,83 @@ const Index = () => {
                       className="rounded-full border-gray-600 text-gray-300 hover:bg-gray-800"
                     >
                       Reset
+                    </Button>
+                  </div>
+
+                  {/* Image Preview */}
+                  {uploadedImage && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-300">Original</h4>
+                        <img
+                          src={uploadedImage}
+                          alt="Original"
+                          className="w-full h-48 object-cover rounded-lg border border-gray-600"
+                        />
+                      </div>
+                      {processedImage && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-gray-300">Result</h4>
+                          <img
+                            src={processedImage}
+                            alt="Processed"
+                            className="w-full h-48 object-cover rounded-lg border border-gray-600"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Error Display */}
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-800 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-red-400" />
+                      <span className="text-sm text-red-300">{error}</span>
+                    </div>
+                  )}
+
+                  {/* Download Options */}
+                  {processedImage && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-gray-300">Download Options</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          onClick={() => downloadImage(processedImage, 'low')}
+                          size="sm"
+                          className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          Low
+                        </Button>
+                        <Button
+                          onClick={() => downloadImage(processedImage, 'medium')}
+                          size="sm"
+                          className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          Medium
+                        </Button>
+                        <Button
+                          onClick={() => downloadImage(processedImage, 'high')}
+                          size="sm"
+                          className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          HD
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default Index;
