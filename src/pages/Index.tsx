@@ -255,37 +255,11 @@ const Index = () => {
               {/* Mode Toggle */}
               <div className="flex flex-wrap gap-3">
                 <Button
-                  onClick={() => setActiveMode('single')}
-                  className={`px-6 py-3 text-base font-semibold rounded-full transition-all ${
-                    activeMode === 'single' 
-                      ? "mode-toggle active" 
-                      : "mode-toggle"
-                  }`}
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Single Image
-                </Button>
-                <Button
-                  onClick={() => setActiveMode('batch')}
-                  className={`px-6 py-3 text-base font-semibold rounded-full transition-all ${
-                    activeMode === 'batch' 
-                      ? "mode-toggle active" 
-                      : "mode-toggle"
-                  }`}
-                >
-                  <Layers className="w-4 h-4 mr-2" />
-                  Batch Process
-                </Button>
-                <Button
-                  onClick={() => setActiveMode('generate')}
-                  className={`px-6 py-3 text-base font-semibold rounded-full transition-all ${
-                    activeMode === 'generate' 
-                      ? "mode-toggle active" 
-                      : "mode-toggle"
-                  }`}
+                  disabled
+                  className="px-6 py-3 text-base font-semibold rounded-full transition-all mode-toggle opacity-50 cursor-not-allowed"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
-                  AI Generate
+                  AI Generate - Coming Soon
                 </Button>
               </div>
             </div>
