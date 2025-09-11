@@ -2,7 +2,7 @@ import { pipeline, env } from '@huggingface/transformers';
 
 // Configure transformers.js to always download models
 env.allowLocalModels = false;
-env.useBrowserCache = false;
+env.useBrowserCache = true;
 
 const MAX_IMAGE_DIMENSION = 1024;
 
@@ -33,10 +33,11 @@ function resizeImageIfNeeded(canvas: HTMLCanvasElement, ctx: CanvasRenderingCont
 
 export const removeBackground = async (imageElement: HTMLImageElement): Promise<Blob> => {
   try {
-    console.log('Starting advanced background removal with RMBG-1.4...');
+    console.log('Starting advanced background removal...');
     
-    // Use RMBG-1.4 model which is specifically designed for high-quality background removal
-    const segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+    // Use a more reliable model for background removal
+    const segmenter = await pipeline('image-segmentation', 'Xenova/detr-resnet-50-panoptic', {
+      quantized: true,
     });
     
     // Convert HTMLImageElement to canvas
@@ -51,30 +52,32 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     
     // Get image data as base64
     const imageData = canvas.toDataURL('image/png', 1.0);
-    console.log('Image converted to base64');
+    console.log('Image prepared for processing');
     
     // Process the image with the advanced segmentation model
-    console.log('Processing with RMBG-1.4 model...');
+    console.log('Processing with segmentation model...');
     const result = await segmenter(imageData);
     
-    console.log('Advanced segmentation result:', result);
+    console.log('Segmentation result:', result);
     
     if (!result || !Array.isArray(result) || result.length === 0) {
-      throw new Error('Invalid segmentation result from RMBG model');
+      throw new Error('Invalid segmentation result');
     }
 
-    // Find the subject mask (RMBG model provides better structure)
+    // Find the best mask for background removal
     let mask = null;
-    if (result[0].mask) {
-      mask = result[0].mask;
-    } else {
-      // Try different result structures
-      for (const item of result) {
-        if (item.mask) {
-          mask = item.mask;
-          break;
-        }
+    
+    // Look for person or main subject masks
+    for (const item of result) {
+      if (item.label && (item.label.includes('person') || item.label.includes('LABEL_0')) && item.mask) {
+        mask = item.mask;
+        break;
       }
+    }
+    
+    // If no person mask found, use the first available mask
+    if (!mask && result[0] && result[0].mask) {
+      mask = result[0].mask;
     }
     
     if (!mask || !mask.data) {
@@ -96,16 +99,16 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
     const data = outputImageData.data;
     
-    // Apply the mask to alpha channel with better threshold handling for fine details
+    // Apply the mask to alpha channel
     const maskData = mask.data;
-    const threshold = 0.3; // Lower threshold for better edge detection
+    const threshold = 0.5;
     
     for (let i = 0; i < maskData.length; i++) {
       const maskValue = maskData[i];
       let alpha;
       
       if (maskValue > threshold) {
-        // Keep the pixel (subject) with anti-aliasing
+        // Keep the pixel (subject)
         alpha = Math.min(255, Math.round(maskValue * 255));
       } else {
         // Remove the pixel (background)
@@ -116,14 +119,14 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     }
     
     outputCtx.putImageData(outputImageData, 0, 0);
-    console.log('Advanced mask applied successfully with improved edge handling');
+    console.log('Mask applied successfully');
     
     // Convert canvas to blob
     return new Promise((resolve, reject) => {
       outputCanvas.toBlob(
         (blob) => {
           if (blob) {
-            console.log('Successfully created final blob with advanced background removal');
+            console.log('Successfully created final blob');
             resolve(blob);
           } else {
             reject(new Error('Failed to create blob'));
@@ -134,7 +137,7 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
       );
     });
   } catch (error) {
-    console.error('Error in advanced background removal:', error);
+    console.error('Error in background removal:', error);
     throw new Error('Background removal failed. Please try again with a different image.');
   }
 };
