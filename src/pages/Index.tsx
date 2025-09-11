@@ -442,6 +442,86 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Tutorial Video Section */}
+      <section className="section-padding bg-gradient-to-br from-gray-900 to-black">
+        <div className="container-max">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              See ClearPix in Action
+            </h3>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Watch our quick tutorial to see how easy it is to remove backgrounds from your images in just a few clicks.
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <div className="relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 border border-gray-700">
+              {/* Video Container */}
+              <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-gray-600">
+                {/* Placeholder for actual video */}
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 hover:bg-green-600 transition-colors cursor-pointer">
+                      <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <h4 className="text-xl font-semibold text-white mb-2">ClearPix Tutorial</h4>
+                    <p className="text-gray-300 mb-4">Learn how to remove backgrounds in 30 seconds</p>
+                    <div className="text-sm text-gray-400">Duration: 1:30 min</div>
+                  </div>
+                </div>
+                
+                {/* Video would go here - placeholder for now */}
+                {/* <video 
+                  className="w-full h-full object-cover"
+                  poster="/tutorial-thumbnail.jpg"
+                  controls
+                >
+                  <source src="/tutorial-video.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video> */}
+              </div>
+              
+              {/* Video Description */}
+              <div className="mt-6 text-center">
+                <h4 className="text-lg font-semibold text-white mb-2">What You'll Learn:</h4>
+                <div className="grid md:grid-cols-3 gap-4 mt-4">
+                  <div className="flex items-center gap-2 text-gray-300">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm">Upload your image</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-300">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm">AI background removal</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-300">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm">Download & editing tools</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Additional Tutorial Points */}
+            <div className="grid md:grid-cols-2 gap-6 mt-8">
+              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+                <h5 className="text-lg font-semibold text-white mb-3">🎯 Perfect for Beginners</h5>
+                <p className="text-gray-300 text-sm">
+                  No technical skills required. Our intuitive interface makes background removal accessible to everyone.
+                </p>
+              </div>
+              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+                <h5 className="text-lg font-semibold text-white mb-3">⚡ Quick Results</h5>
+                <p className="text-gray-300 text-sm">
+                  See professional results in seconds. Perfect for e-commerce, social media, and creative projects.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
