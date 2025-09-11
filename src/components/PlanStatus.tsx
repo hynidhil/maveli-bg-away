@@ -11,8 +11,8 @@ const PlanStatus: React.FC<PlanStatusProps> = ({ onUpgradeClick }) => {
   const plan = getUserPlan();
   const remaining = getRemainingBackgroundRemovals();
 
-  // Don't show anything if user has full free plan usage remaining
-  if (plan.type === 'free' && remaining === 3) {
+  // Don't show anything for free plan users
+  if (plan.type === 'free') {
     return null;
   }
 
@@ -29,32 +29,8 @@ const PlanStatus: React.FC<PlanStatusProps> = ({ onUpgradeClick }) => {
       </div>
     );
   }
-
-  return (
-    <div className="fixed top-4 right-4 bg-white border border-gray-200 p-3 rounded-lg shadow-lg z-50">
-      <div className="flex items-center gap-2 mb-2">
-        <Zap className="w-5 h-5 text-blue-500" />
-        <span className="font-semibold">Free Plan</span>
-      </div>
-      <div className="text-sm text-gray-600 mb-2">
-        {remaining > 0 ? (
-          <>Background removals: <strong>{remaining}/3 left</strong></>
-        ) : (
-          <span className="text-red-600"><strong>0/3 left - Limit reached!</strong></span>
-        )}
-      </div>
-      {remaining <= 1 && (
-        <Button
-          onClick={onUpgradeClick}
-          size="sm"
-          className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
-        >
-          <Crown className="w-4 h-4 mr-1" />
-          Upgrade to Premium
-        </Button>
-      )}
-    </div>
-  );
+  
+  return null;
 };
 
 export default PlanStatus;
