@@ -387,6 +387,25 @@ const Index = () => {
                   {/* Download Options */}
                   {processedImage && (
                     <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-gray-300">Editing Tools</h4>
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        <Button
+                          onClick={() => setShowManualEditor(true)}
+                          size="sm"
+                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                        >
+                          <Pencil className="w-3 h-3 mr-1" />
+                          Fine-tune Edges
+                        </Button>
+                        <Button
+                          onClick={() => setShowBackgroundEffects(true)}
+                          size="sm"
+                          className="bg-orange-600 hover:bg-orange-700 text-white text-xs"
+                        >
+                          Add Background
+                        </Button>
+                      </div>
+                      
                       <h4 className="text-sm font-medium text-gray-300">Download Options</h4>
                       <div className="grid grid-cols-3 gap-2">
                         <Button
