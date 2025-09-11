@@ -11,6 +11,11 @@ const PlanStatus: React.FC<PlanStatusProps> = ({ onUpgradeClick }) => {
   const plan = getUserPlan();
   const remaining = getRemainingBackgroundRemovals();
 
+  // Don't show anything if user has full free plan usage remaining
+  if (plan.type === 'free' && remaining === 3) {
+    return null;
+  }
+
   if (plan.type === 'premium') {
     return (
       <div className="fixed top-4 right-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-3 rounded-lg shadow-lg z-50">
