@@ -138,19 +138,6 @@ const Footer = () => {
 
         {/* Terms of Service */}
 
-        {/* Privacy Statement */}
-        <div className="mb-8 md:mb-12">
-          <h3 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6 text-center">Privacy Policy</h3>
-          <div className="bg-gray-900 rounded-lg p-6 md:p-8">
-            <p className="text-gray-300 text-sm md:text-base leading-relaxed">
-              <strong className="text-white">Your privacy is important to us.</strong> Background removal happens locally in your browser whenever possible. 
-              When cloud processing is required, images are processed securely and automatically deleted after processing. 
-              We do not store, share, or use your images for any purpose other than providing the background removal service. 
-              We may collect anonymous usage statistics to improve our service, but no personal data or images are retained.
-            </p>
-          </div>
-        </div>
-
         {/* Copyright */}
         <div className="text-center border-t border-gray-800 pt-6 md:pt-8">
           <p className="text-gray-300 text-sm md:text-base">
