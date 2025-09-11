@@ -118,9 +118,13 @@ const Index = () => {
       </section>
       
       {/* Main Content */}
-      <div className="section-padding">
-        {/* Content will be added here based on mode selection */}
-      </div>
+      <section className="section-padding">
+        <div className="container-max">
+          {activeMode === 'single' && <ImageUploader />}
+          {activeMode === 'batch' && <BatchImageUploader />}
+          {activeMode === 'generate' && <ImageGenerator />}
+        </div>
+      </section>
       
       <Footer />
     </div>
