@@ -455,10 +455,17 @@ const Index = () => {
               { src: '/imgi_15_person-1.png', alt: 'Person 1' },
               { src: '/imgi_16_person-2.png', alt: 'Person 2' },
               { src: 'https://i.postimg.cc/Xv9qfYy2/imgi-17-person-3.png', alt: 'Person 3' }
-            ].map((image, index) => (
+            ].map((image, index) => {
+              const labels = [
+                '1. Original',
+                '2. Transparent background', 
+                '3. New background'
+              ];
+              
+              return (
               <div
                 key={index}
-                className="relative group cursor-pointer"
+                className="relative group cursor-pointer space-y-3"
                 onClick={() => {
                   fetch(image.src)
                     .then(res => res.blob())
@@ -481,8 +488,12 @@ const Index = () => {
                   alt={image.alt}
                   className="w-full h-64 object-cover rounded-lg border border-gray-600 group-hover:border-green-500 transition-all duration-300"
                 />
+                <div className="text-center">
+                  <p className="text-white font-medium text-sm">{labels[index]}</p>
+                </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </section>
