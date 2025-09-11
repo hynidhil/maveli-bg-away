@@ -6,6 +6,7 @@ import BatchImageUploader from '@/components/BatchImageUploader';
 import ImageGenerator from '@/components/ImageGenerator';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { getUserPlan } from '@/utils/planManager';
 
 const Index = () => {
   const [activeMode, setActiveMode] = useState<'single' | 'batch' | 'generate'>('single');
