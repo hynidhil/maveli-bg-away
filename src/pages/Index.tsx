@@ -287,7 +287,7 @@ const Index = () => {
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-4">Ready to Start?</h3>
                     <p className="text-gray-300 mb-6">
-                      Choose your preferred mode and start removing backgrounds from your images.
+                      Upload your image and start removing backgrounds instantly with our AI-powered tool.
                     </p>
                     <div className="space-y-4">
                       <Button className="btn-primary w-full py-3 text-lg font-semibold rounded-full">
