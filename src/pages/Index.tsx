@@ -52,7 +52,7 @@ const Index = () => {
               variant={activeMode === 'batch' ? "default" : "outline"}
               className={activeMode === 'batch' ? "bg-green-600 hover:bg-green-700" : ""}
             >
-              Batch Upload (Up to 3 Images)
+              Batch Upload (Up to 3 Images) {getUserPlan().type === 'free' ? '🔒' : ''}
             </Button>
             <Button
               onClick={() => setActiveMode('generate')}

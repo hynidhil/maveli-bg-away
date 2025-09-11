@@ -2,8 +2,11 @@ import React, { useState, useRef } from 'react';
 import { Upload, X, Download, Pencil, Loader, RotateCcw, Trash2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
+import { canUseBackgroundRemoval, incrementBackgroundRemovalUsage, getPlanLimits, getUserPlan } from '@/utils/planManager';
 import ManualEditor from '@/components/ManualEditor';
 import BackgroundEffects from '@/components/BackgroundEffects';
+import PlanLimitModal from '@/components/PlanLimitModal';
+import PlanStatus from '@/components/PlanStatus';
 
 interface ImageData {
   id: string;
@@ -19,11 +22,20 @@ const BatchImageUploader = () => {
   const [showManualEditor, setShowManualEditor] = useState<string | null>(null);
   const [showBackgroundEffects, setShowBackgroundEffects] = useState<string | null>(null);
   const [showComparison, setShowComparison] = useState<{ [key: string]: boolean }>({});
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_IMAGES = 3;
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const plan = getUserPlan();
+    const planLimits = getPlanLimits(plan.type);
+    
+    if (!planLimits.batchProcessing) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     const files = Array.from(event.target.files || []);
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     
@@ -75,6 +87,12 @@ const BatchImageUploader = () => {
   };
 
   const processBackgroundRemoval = async (imageId: string) => {
+    // Check plan limits
+    if (!canUseBackgroundRemoval()) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     const image = images.find(img => img.id === imageId);
     if (!image) return;
 
@@ -89,6 +107,9 @@ const BatchImageUploader = () => {
       if (!processedBlob || processedBlob.size === 0) {
         throw new Error('Background removal returned empty result');
       }
+      
+      // Increment usage count on successful processing
+      incrementBackgroundRemovalUsage();
       
       const processedUrl = URL.createObjectURL(processedBlob);
 
@@ -136,6 +157,15 @@ const BatchImageUploader = () => {
   };
 
   const downloadImage = (imageUrl: string, filename: string, quality: 'low' | 'medium' | 'high') => {
+    const plan = getUserPlan();
+    const planLimits = getPlanLimits(plan.type);
+    
+    // Check if HD downloads are allowed
+    if (quality === 'high' && !planLimits.hdDownloads) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -196,6 +226,14 @@ const BatchImageUploader = () => {
   };
 
   const handleManualEditComplete = (imageId: string, editedImageUrl: string) => {
+    const plan = getUserPlan();
+    const planLimits = getPlanLimits(plan.type);
+    
+    if (!planLimits.manualEditing) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     setImages(prev => prev.map(img => 
       img.id === imageId ? { ...img, processedUrl: editedImageUrl } : img
     ));
@@ -203,6 +241,14 @@ const BatchImageUploader = () => {
   };
 
   const handleBackgroundEffectApplied = (imageId: string, imageWithBackground: string) => {
+    const plan = getUserPlan();
+    const planLimits = getPlanLimits(plan.type);
+    
+    if (!planLimits.backgroundEffects) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     setImages(prev => prev.map(img => 
       img.id === imageId ? { ...img, processedUrl: imageWithBackground } : img
     ));
@@ -235,6 +281,13 @@ const BatchImageUploader = () => {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6 space-y-8">
+      <PlanStatus onUpgradeClick={() => setShowPlanLimitModal(true)} />
+      
+      <PlanLimitModal
+        isOpen={showPlanLimitModal}
+        onClose={() => setShowPlanLimitModal(false)}
+      />
+      
       {/* Upload Section */}
       <div className="text-center">
         <input
@@ -402,7 +455,7 @@ const BatchImageUploader = () => {
                       size="sm"
                       className="bg-green-600 hover:bg-green-700 text-xs"
                     >
-                      HD (Full)
+                      {getPlanLimits(getUserPlan().type).hdDownloads ? 'HD (Full)' : 'HD 🔒'}
                     </Button>
                   </div>
                 </div>

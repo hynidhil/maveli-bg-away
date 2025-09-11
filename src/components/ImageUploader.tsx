@@ -2,8 +2,11 @@ import React, { useState, useRef } from 'react';
 import { Upload, Loader, Download, Image as ImageIcon, AlertCircle, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
+import { canUseBackgroundRemoval, incrementBackgroundRemovalUsage, getPlanLimits } from '@/utils/planManager';
 import ManualEditor from '@/components/ManualEditor';
 import BackgroundEffects from '@/components/BackgroundEffects';
+import PlanLimitModal from '@/components/PlanLimitModal';
+import PlanStatus from '@/components/PlanStatus';
 
 const ImageUploader = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -14,6 +17,7 @@ const ImageUploader = () => {
   const [showManualEditor, setShowManualEditor] = useState(false);
   const [showBackgroundEffects, setShowBackgroundEffects] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+  const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +62,12 @@ const ImageUploader = () => {
   const handleRemoveBackground = async () => {
     if (!uploadedFile) return;
     
+    // Check plan limits
+    if (!canUseBackgroundRemoval()) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     setIsProcessing(true);
     setError(null);
     
@@ -71,6 +81,9 @@ const ImageUploader = () => {
       if (!processedBlob || processedBlob.size === 0) {
         throw new Error('Background removal returned empty result');
       }
+      
+      // Increment usage count on successful processing
+      incrementBackgroundRemovalUsage();
       
       const processedUrl = URL.createObjectURL(processedBlob);
       
@@ -95,6 +108,15 @@ const ImageUploader = () => {
   };
 
   const downloadImage = (imageUrl: string, quality: 'low' | 'medium' | 'high') => {
+    const plan = getUserPlan();
+    const planLimits = getPlanLimits(plan.type);
+    
+    // Check if HD downloads are allowed
+    if (quality === 'high' && !planLimits.hdDownloads) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -141,11 +163,27 @@ const ImageUploader = () => {
   };
 
   const handleManualEditComplete = (editedImageUrl: string) => {
+    const plan = getUserPlan();
+    const planLimits = getPlanLimits(plan.type);
+    
+    if (!planLimits.manualEditing) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     setProcessedImage(editedImageUrl);
     setShowManualEditor(false);
   };
 
   const handleBackgroundEffectApplied = (imageWithBackground: string) => {
+    const plan = getUserPlan();
+    const planLimits = getPlanLimits(plan.type);
+    
+    if (!planLimits.backgroundEffects) {
+      setShowPlanLimitModal(true);
+      return;
+    }
+    
     setProcessedImage(imageWithBackground);
     setShowBackgroundEffects(false);
   };
@@ -190,6 +228,13 @@ const ImageUploader = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto p-6 space-y-8">
+      <PlanStatus onUpgradeClick={() => setShowPlanLimitModal(true)} />
+      
+      <PlanLimitModal
+        isOpen={showPlanLimitModal}
+        onClose={() => setShowPlanLimitModal(false)}
+      />
+      
       {/* Upload Section */}
       <div className="text-center">
         <input
@@ -384,7 +429,7 @@ const ImageUploader = () => {
             </div>
             
             <div className="text-center space-y-2">
-              <p className="font-medium">High Quality</p>
+              <p className="font-medium">High Quality {getPlanLimits(getUserPlan().type).hdDownloads ? '' : '🔒'}</p>
               <p className="text-sm text-muted-foreground">Original Size</p>
               <p className="text-sm text-muted-foreground">{getEstimatedFileSize('high')}</p>
               <Button
@@ -392,7 +437,7 @@ const ImageUploader = () => {
                 className="bg-green-600 hover:bg-green-700 w-full"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download HD
+                {getPlanLimits(getUserPlan().type).hdDownloads ? 'Download HD' : 'HD (Premium)'}
               </Button>
             </div>
           </div>
