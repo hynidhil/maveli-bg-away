@@ -20,7 +20,7 @@ const ImageGenerator = () => {
     // Check if API key is available
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      setError('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to your environment variables.');
+      setError('Gemini API key not configured. Please check your environment configuration.');
       toast.error('API key not configured');
       return;
     }
@@ -31,17 +31,16 @@ const ImageGenerator = () => {
 
     try {
       const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent',
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
-            'x-goog-api-key': apiKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             contents: [{
               parts: [
-                { text: prompt.trim() }
+                { text: `Generate an image: ${prompt.trim()}` }
               ]
             }]
           }),
