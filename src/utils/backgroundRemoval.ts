@@ -1,41 +1,124 @@
-import { pipeline, env } from '@huggingface/transformers';
-
-// Configure transformers.js to always download models
-env.allowLocalModels = false;
-env.useBrowserCache = true;
-
-const MAX_IMAGE_DIMENSION = 1024;
-
-function resizeImageIfNeeded(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, image: HTMLImageElement) {
-  let width = image.naturalWidth;
-  let height = image.naturalHeight;
-
-  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
-    if (width > height) {
-      height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
-      width = MAX_IMAGE_DIMENSION;
-    } else {
-      width = Math.round((width * MAX_IMAGE_DIMENSION) / height);
-      height = MAX_IMAGE_DIMENSION;
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(image, 0, 0, width, height);
-    return true;
-  }
-
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(image, 0, 0);
-  return false;
-}
+// Professional background removal using Remove.bg API
+const MAX_FILE_SIZE = 12 * 1024 * 1024; // 12MB limit for Remove.bg API
 
 export const removeBackground = async (imageElement: HTMLImageElement): Promise<Blob> => {
   try {
-    console.log('Starting advanced background removal...');
+    console.log('Starting professional background removal with Remove.bg API...');
     
-    // Use a more reliable model for background removal
+    const apiKey = import.meta.env.VITE_REMOVEBG_API_KEY;
+    if (!apiKey) {
+      throw new Error('Remove.bg API key not configured. Please check your environment configuration.');
+    }
+
+    // Convert image to canvas first to get proper format and size
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) throw new Error('Could not get canvas context');
+    
+    // Set canvas dimensions to match image
+    canvas.width = imageElement.naturalWidth;
+    canvas.height = imageElement.naturalHeight;
+    
+    // Draw image to canvas
+    ctx.drawImage(imageElement, 0, 0);
+    
+    // Convert canvas to blob
+    const imageBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to convert image to blob'));
+          }
+        },
+        'image/png',
+        0.9
+      );
+    });
+
+    // Check file size
+    if (imageBlob.size > MAX_FILE_SIZE) {
+      throw new Error('Image file is too large. Please use an image smaller than 12MB.');
+    }
+
+    console.log(`Processing image with Remove.bg API (${Math.round(imageBlob.size / 1024)}KB)...`);
+
+    // Prepare form data for Remove.bg API
+    const formData = new FormData();
+    formData.append('image_file', imageBlob, 'image.png');
+    formData.append('size', 'auto');
+    formData.append('format', 'png');
+    formData.append('type', 'auto');
+    formData.append('crop', 'false');
+    formData.append('add_shadow', 'false');
+    formData.append('semitransparency', 'true');
+    formData.append('channels', 'rgba');
+    formData.append('roi', '0% 0% 100% 100%');
+    formData.append('position', 'center');
+
+    // Make API request to Remove.bg
+    const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+      method: 'POST',
+      headers: {
+        'X-Api-Key': apiKey,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      
+      try {
+        const errorData = await response.json();
+        if (errorData.errors && errorData.errors.length > 0) {
+          errorMessage = errorData.errors[0].title || errorMessage;
+        }
+      } catch (e) {
+        // If we can't parse the error response, use the default message
+      }
+      
+      // Handle specific error cases
+      if (response.status === 402) {
+        errorMessage = 'API quota exceeded. Please check your Remove.bg account credits.';
+      } else if (response.status === 403) {
+        errorMessage = 'Invalid API key. Please check your Remove.bg API key.';
+      } else if (response.status === 400) {
+        errorMessage = 'Invalid image format or size. Please try a different image.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    // Get the processed image as blob
+    const processedBlob = await response.blob();
+    
+    if (processedBlob.size === 0) {
+      throw new Error('Received empty response from Remove.bg API');
+    }
+
+    console.log('Background removal completed successfully with Remove.bg API');
+    return processedBlob;
+
+  } catch (error) {
+    console.error('Error in Remove.bg background removal:', error);
+    
+    // Fallback to local processing if API fails
+    console.log('Falling back to local background removal...');
+    return await removeBackgroundLocal(imageElement);
+  }
+};
+
+// Fallback local background removal using Hugging Face transformers
+const removeBackgroundLocal = async (imageElement: HTMLImageElement): Promise<Blob> => {
+  try {
+    console.log('Starting local background removal fallback...');
+    
+    // Dynamic import to avoid loading if not needed
+    const { pipeline } = await import('@huggingface/transformers');
+    
+    // Use a lightweight model for fallback
     const segmenter = await pipeline('image-segmentation', 'Xenova/detr-resnet-50-panoptic', {
       quantized: true,
     });
@@ -46,28 +129,37 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     
     if (!ctx) throw new Error('Could not get canvas context');
     
-    // Resize image if needed and draw it to canvas
-    const wasResized = resizeImageIfNeeded(canvas, ctx, imageElement);
-    console.log(`Image ${wasResized ? 'was' : 'was not'} resized. Final dimensions: ${canvas.width}x${canvas.height}`);
+    // Resize if too large for local processing
+    let width = imageElement.naturalWidth;
+    let height = imageElement.naturalHeight;
+    const maxDimension = 512;
+    
+    if (width > maxDimension || height > maxDimension) {
+      if (width > height) {
+        height = Math.round((height * maxDimension) / width);
+        width = maxDimension;
+      } else {
+        width = Math.round((width * maxDimension) / height);
+        height = maxDimension;
+      }
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(imageElement, 0, 0, width, height);
     
     // Get image data as base64
     const imageData = canvas.toDataURL('image/png', 1.0);
-    console.log('Image prepared for processing');
     
-    // Process the image with the advanced segmentation model
-    console.log('Processing with segmentation model...');
+    // Process the image
     const result = await segmenter(imageData);
     
-    console.log('Segmentation result:', result);
-    
     if (!result || !Array.isArray(result) || result.length === 0) {
-      throw new Error('Invalid segmentation result');
+      throw new Error('No segmentation result');
     }
 
-    // Find the best mask for background removal
+    // Find the best mask
     let mask = null;
-    
-    // Look for person or main subject masks
     for (const item of result) {
       if (item.label && (item.label.includes('person') || item.label.includes('LABEL_0')) && item.mask) {
         mask = item.mask;
@@ -75,16 +167,15 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
       }
     }
     
-    // If no person mask found, use the first available mask
     if (!mask && result[0] && result[0].mask) {
       mask = result[0].mask;
     }
     
     if (!mask || !mask.data) {
-      throw new Error('No valid mask found in segmentation result');
+      throw new Error('No valid mask found');
     }
     
-    // Create a new canvas for the masked image
+    // Apply mask
     const outputCanvas = document.createElement('canvas');
     outputCanvas.width = canvas.width;
     outputCanvas.height = canvas.height;
@@ -92,52 +183,36 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     
     if (!outputCtx) throw new Error('Could not get output canvas context');
     
-    // Draw original image
     outputCtx.drawImage(canvas, 0, 0);
     
-    // Apply the mask with improved processing for fine edges
     const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
     const data = outputImageData.data;
-    
-    // Apply the mask to alpha channel
     const maskData = mask.data;
-    const threshold = 0.5;
     
     for (let i = 0; i < maskData.length; i++) {
       const maskValue = maskData[i];
-      let alpha;
-      
-      if (maskValue > threshold) {
-        // Keep the pixel (subject)
-        alpha = Math.min(255, Math.round(maskValue * 255));
-      } else {
-        // Remove the pixel (background)
-        alpha = 0;
-      }
-      
-      data[i * 4 + 3] = alpha;
+      data[i * 4 + 3] = maskValue > 0.5 ? Math.min(255, Math.round(maskValue * 255)) : 0;
     }
     
     outputCtx.putImageData(outputImageData, 0, 0);
-    console.log('Mask applied successfully');
     
-    // Convert canvas to blob
     return new Promise((resolve, reject) => {
       outputCanvas.toBlob(
         (blob) => {
           if (blob) {
-            console.log('Successfully created final blob');
+            console.log('Local background removal completed');
             resolve(blob);
           } else {
-            reject(new Error('Failed to create blob'));
+            reject(new Error('Failed to create blob from local processing'));
           }
         },
         'image/png',
         1.0
       );
     });
+    
   } catch (error) {
-    console.error('Error in background removal:', error);
+    console.error('Local background removal failed:', error);
     throw new Error('Background removal failed. Please try again with a different image.');
   }
 };
@@ -146,7 +221,8 @@ export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.crossOrigin = 'anonymous';
     img.src = URL.createObjectURL(file);
   });
 };

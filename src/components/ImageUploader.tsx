@@ -67,13 +67,28 @@ const ImageUploader = () => {
       console.log('Image loaded, starting background removal...');
       
       const processedBlob = await removeBackground(imageElement);
+      
+      if (!processedBlob || processedBlob.size === 0) {
+        throw new Error('Background removal returned empty result');
+      }
+      
       const processedUrl = URL.createObjectURL(processedBlob);
       
       setProcessedImage(processedUrl);
-      console.log('Background removal completed successfully');
+      console.log(`Background removal completed successfully (${Math.round(processedBlob.size / 1024)}KB)`);
     } catch (err) {
       console.error('Error during background removal:', err);
-      setError(err instanceof Error ? err.message : 'Failed to remove background');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to remove background';
+      setError(errorMessage);
+      
+      // Show user-friendly error messages
+      if (errorMessage.includes('quota exceeded')) {
+        setError('API quota exceeded. The service will use local processing for now.');
+      } else if (errorMessage.includes('Invalid API key')) {
+        setError('API configuration issue. Using local processing instead.');
+      } else if (errorMessage.includes('too large')) {
+        setError('Image is too large. Please use an image smaller than 12MB.');
+      }
     } finally {
       setIsProcessing(false);
     }

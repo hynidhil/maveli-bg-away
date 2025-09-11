@@ -85,6 +85,11 @@ const BatchImageUploader = () => {
     try {
       const imageElement = await loadImage(image.file);
       const processedBlob = await removeBackground(imageElement);
+      
+      if (!processedBlob || processedBlob.size === 0) {
+        throw new Error('Background removal returned empty result');
+      }
+      
       const processedUrl = URL.createObjectURL(processedBlob);
 
       setImages(prev => prev.map(img => 
@@ -93,9 +98,22 @@ const BatchImageUploader = () => {
           : img
       ));
     } catch (error) {
+      console.error(`Error processing image ${imageId}:`, error);
+      let errorMessage = 'Failed to remove background';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('quota exceeded')) {
+          errorMessage = 'API quota exceeded - using local processing';
+        } else if (error.message.includes('too large')) {
+          errorMessage = 'Image too large (max 12MB)';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setImages(prev => prev.map(img => 
         img.id === imageId 
-          ? { ...img, isProcessing: false, error: 'Failed to remove background' }
+          ? { ...img, isProcessing: false, error: errorMessage }
           : img
       ));
     }
