@@ -454,7 +454,7 @@ const Index = () => {
             {[
               { src: '/imgi_15_person-1.png', alt: 'Person 1' },
               { src: '/imgi_16_person-2.png', alt: 'Person 2' },
-              { src: '/imgi_17_person-3.png', alt: 'Person 3' }
+              { src: 'https://i.postimg.cc/Xv9qfYy2/imgi-17-person-3.png', alt: 'Person 3' }
             ].map((image, index) => (
               <div
                 key={index}
