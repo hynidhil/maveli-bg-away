@@ -18,20 +18,20 @@ const Index = () => {
       {/* Hero Section */}
       <section className="hero-section section-padding min-h-screen flex items-center">
         <div className="container-max">
-          <div className="grid lg:grid-cols-2 gap-16 items-center relative z-10">
+          <div className="text-center relative z-10">
             {/* Left Side - Content */}
-            <div className="space-y-8">
+            <div className="space-y-8 max-w-4xl mx-auto">
               {activeMode === 'generate' ? (
                 <>
                   <h2 className="hero-title text-4xl md:text-6xl text-white leading-tight">
-                    Create Amazing Images
+                    AI Image Generator
                     <span className="block bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
-                      with AI
+                      Coming Soon
                     </span>
                   </h2>
                   <p className="hero-subtitle text-lg md:text-xl text-gray-300 leading-relaxed">
-                    Generate stunning, unique images from text descriptions using advanced AI technology. 
-                    Perfect for creative projects, social media, and professional use.
+                    We're working on bringing you an amazing AI image generation feature. 
+                    Stay tuned for updates!
                   </p>
                 </>
               ) : (
@@ -104,9 +104,10 @@ const Index = () => {
                       ? "btn-secondary" 
                       : "mode-toggle"
                   }`}
+                  disabled={true}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
-                  AI Generator
+                  AI Generator (Coming Soon)
                 </Button>
               </div>
             </div>
@@ -147,6 +148,35 @@ const Index = () => {
           </div>
         </div>
       </section>
+      
+      {/* Main Content */}
+      <div className="section-padding">
+        {activeMode === 'single' && (
+          <div className="container-max">
+            <ImageUploader />
+          </div>
+        )}
+        {activeMode === 'batch' && (
+          <div className="container-max">
+            <BatchImageUploader />
+          </div>
+        )}
+        {activeMode === 'generate' && (
+          <div className="container-max text-center py-20">
+            <div className="max-w-2xl mx-auto">
+              <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                <Sparkles className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-4xl font-bold text-white mb-6">AI Image Generator</h3>
+              <h4 className="text-2xl font-semibold text-green-400 mb-6">Coming Soon</h4>
+              <p className="text-xl text-gray-300 leading-relaxed">
+                We're working hard to bring you an amazing AI-powered image generation feature. 
+                Create stunning, unique images from simple text descriptions.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
