@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <p className="text-muted-foreground text-sm">
-            © 2024 RemoveMaveli.AI. Built with ❤️ for seamless background removal and AI image generation.
+            © 2024 ClearPix. Built with ❤️ for seamless background removal and AI image generation.
           </p>
         </div>
         

@@ -1,6 +1,4 @@
-# Welcome to your Lovable project
-
-## RemoveMaveli.AI - AI-Powered Background Removal & Image Generation
+# ClearPix - AI-Powered Background Removal & Image Generation
 
 A comprehensive AI-powered tool that combines background removal and image generation capabilities.
 

@@ -1,5 +1,5 @@
 
-export const addWatermarkToImage = (imageUrl: string, watermarkText: string = "Remove.AI"): Promise<string> => {
+export const addWatermarkToImage = (imageUrl: string, watermarkText: string = "ClearPix"): Promise<string> => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');

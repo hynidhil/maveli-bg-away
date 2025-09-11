@@ -42,7 +42,7 @@ const PremiumModal: React.FC<PremiumModalProps> = ({ isOpen, onClose }) => {
       key: 'rzp_test_9999999999', // Replace with your Razorpay key
       amount: 900, // ₹9 in paise
       currency: 'INR',
-      name: 'Remove.AI Premium',
+      name: 'ClearPix Premium',
       description: '2 Month Premium Access',
       image: '/favicon.ico',
       handler: function (response: any) {
