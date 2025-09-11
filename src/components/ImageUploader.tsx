@@ -227,7 +227,7 @@ const ImageUploader = () => {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 space-y-8">
+    <div className="w-full max-w-5xl mx-auto space-y-12">
       <PlanStatus onUpgradeClick={() => setShowPlanLimitModal(true)} />
       
       <PlanLimitModal
@@ -236,7 +236,7 @@ const ImageUploader = () => {
       />
       
       {/* Upload Section */}
-      <div className="text-center">
+      <div className="text-center mb-16">
         <input
           ref={fileInputRef}
           type="file"
@@ -247,35 +247,34 @@ const ImageUploader = () => {
         
         {!uploadedImage ? (
           <div 
-            className="upload-area rounded-2xl p-16 cursor-pointer transition-all duration-300"
+            className="upload-area rounded-3xl p-20 cursor-pointer transition-all duration-300 max-w-2xl mx-auto"
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
           >
-            <div className="flex flex-col items-center space-y-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Upload className="w-10 h-10 text-white" />
+            <div className="flex flex-col items-center space-y-6">
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center shadow-strong">
+                <Upload className="w-12 h-12 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-800 mb-2">Upload Image</p>
-                <p className="text-gray-600 text-lg">or drop a file,</p>
-                <p className="text-gray-500">paste image or URL</p>
+                <p className="text-3xl font-bold text-gray-900 mb-3">Upload Image</p>
+                <p className="text-gray-600 text-xl mb-1">or drop a file,</p>
+                <p className="text-gray-500 text-lg">paste image or URL</p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <Button
               onClick={() => fileInputRef.current?.click()}
-              className="btn-secondary px-6 py-3 rounded-full"
+              className="btn-primary px-8 py-4 rounded-full text-lg font-semibold"
             >
               <Upload className="w-4 h-4 mr-2" />
               Upload New Image
             </Button>
             <Button
               onClick={resetAll}
-              variant="outline" 
-              className="ml-2 px-6 py-3 rounded-full bg-white hover:bg-gray-50"
+              className="ml-4 px-8 py-4 rounded-full text-lg font-semibold mode-toggle"
             >
               Reset All
             </Button>
@@ -285,7 +284,7 @@ const ImageUploader = () => {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 flex items-center space-x-3 card-modern">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 flex items-center space-x-3 shadow-minimal">
           <AlertCircle className="w-5 h-5 text-destructive" />
           <p className="text-destructive">{error}</p>
         </div>
@@ -293,49 +292,49 @@ const ImageUploader = () => {
 
       {/* Image Preview and Processing */}
       {uploadedImage && (
-        <div className="grid md:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-16 mb-16">
           {/* Original Image */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-center space-x-2">
-              <h3 className="text-2xl font-bold text-gray-800">Original</h3>
+          <div className="space-y-8">
+            <div className="flex items-center justify-center space-x-3">
+              <h3 className="text-3xl font-bold text-gray-900">Original</h3>
               <Button
                 onClick={() => setShowManualEditor(true)}
                 size="sm"
-                className="btn-secondary rounded-full px-4 py-2"
+                className="mode-toggle rounded-full px-4 py-2"
                 title="Manual editing tool"
               >
                 <Pencil className="w-4 h-4" />
               </Button>
             </div>
-            <div className="card-modern p-6">
+            <div className="card-modern p-8">
               <img
                 src={uploadedImage}
                 alt="Original"
-                className="w-full h-auto max-h-96 object-contain image-preview"
+                className="w-full h-auto max-h-[400px] object-contain image-preview"
               />
             </div>
           </div>
 
           {/* Processed Image */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-center space-x-2">
-              <h3 className="text-2xl font-bold text-gray-800">Result</h3>
+          <div className="space-y-8">
+            <div className="flex items-center justify-center space-x-3">
+              <h3 className="text-3xl font-bold text-gray-900">Result</h3>
               {processedImage && (
                 <Button
                   onClick={() => setShowComparison(!showComparison)}
                   size="sm"
-                  className="bg-white hover:bg-gray-50 border border-gray-200 rounded-full px-4 py-2"
+                  className="mode-toggle rounded-full px-4 py-2"
                 >
                   {showComparison ? 'Show Processed' : 'Compare Before/After'}
                 </Button>
               )}
             </div>
-            <div className="card-modern p-6 min-h-[300px] flex items-center justify-center">
+            <div className="card-modern p-8 min-h-[400px] flex items-center justify-center">
               {isProcessing ? (
-                <div className="flex flex-col items-center space-y-4">
-                  <Loader className="w-10 h-10 text-blue-500 animate-spin" />
-                  <p className="text-gray-600 font-medium">Removing background...</p>
-                  <p className="text-sm text-gray-500">Processing fine details like hair and edges</p>
+                <div className="flex flex-col items-center space-y-6">
+                  <Loader className="w-12 h-12 text-blue-500 animate-spin" />
+                  <p className="text-gray-700 font-semibold text-lg">Removing background...</p>
+                  <p className="text-gray-500">Processing fine details like hair and edges</p>
                 </div>
               ) : processedImage ? (
                 <div className="relative">
@@ -350,7 +349,7 @@ const ImageUploader = () => {
                   <img
                     src={showComparison ? uploadedImage : processedImage}
                     alt="Processed"
-                    className="w-full h-auto max-h-96 object-contain image-preview relative z-10"
+                    className="w-full h-auto max-h-[400px] object-contain image-preview relative z-10"
                   />
                 </div>
               ) : (
@@ -366,15 +365,15 @@ const ImageUploader = () => {
 
       {/* Action Buttons */}
       {uploadedImage && (
-        <div className="flex flex-col sm:flex-row gap-6 justify-center">
+        <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
           <Button
             onClick={handleRemoveBackground}
             disabled={isProcessing}
-            className="btn-primary px-12 py-4 text-lg font-semibold rounded-full"
+            className="btn-primary px-16 py-5 text-xl font-bold rounded-full shadow-strong"
           >
             {isProcessing ? (
               <>
-                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                <Loader className="w-5 h-5 mr-3 animate-spin" />
                 Processing...
               </>
             ) : (
@@ -385,7 +384,7 @@ const ImageUploader = () => {
           {processedImage && (
             <Button
               onClick={() => setShowBackgroundEffects(true)}
-              className="btn-secondary px-12 py-4 text-lg font-semibold rounded-full"
+              className="btn-secondary px-16 py-5 text-xl font-bold rounded-full shadow-strong"
             >
               Background Effects
             </Button>
@@ -395,42 +394,42 @@ const ImageUploader = () => {
 
       {/* Download Options */}
       {processedImage && (
-        <div className="card-modern p-8">
-          <h3 className="text-2xl font-bold mb-8 text-center text-gray-800">Download Options</h3>
-          <div className="grid sm:grid-cols-3 gap-6">
-            <div className="text-center space-y-4 p-6 bg-gray-50 rounded-2xl">
-              <p className="font-bold text-lg text-gray-800">Low Quality</p>
-              <p className="text-gray-600">800x600px</p>
-              <p className="text-gray-500 text-sm">{getEstimatedFileSize('low')}</p>
+        <div className="card-modern p-10">
+          <h3 className="text-3xl font-bold mb-12 text-center text-gray-900">Download Options</h3>
+          <div className="grid sm:grid-cols-3 gap-8">
+            <div className="text-center space-y-6 p-8 bg-gray-50 rounded-3xl shadow-minimal">
+              <p className="font-bold text-xl text-gray-900">Low Quality</p>
+              <p className="text-gray-600 text-lg">800x600px</p>
+              <p className="text-gray-500">{getEstimatedFileSize('low')}</p>
               <Button
                 onClick={() => downloadImage(processedImage, 'low')}
-                className="w-full bg-white hover:bg-gray-50 border border-gray-200 rounded-full py-3"
+                className="w-full mode-toggle rounded-full py-4 text-lg font-semibold"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </Button>
             </div>
             
-            <div className="text-center space-y-4 p-6 bg-gray-50 rounded-2xl">
-              <p className="font-bold text-lg text-gray-800">Medium Quality</p>
-              <p className="text-gray-600">1920x1080px</p>
-              <p className="text-gray-500 text-sm">{getEstimatedFileSize('medium')}</p>
+            <div className="text-center space-y-6 p-8 bg-gray-50 rounded-3xl shadow-minimal">
+              <p className="font-bold text-xl text-gray-900">Medium Quality</p>
+              <p className="text-gray-600 text-lg">1920x1080px</p>
+              <p className="text-gray-500">{getEstimatedFileSize('medium')}</p>
               <Button
                 onClick={() => downloadImage(processedImage, 'medium')}
-                className="w-full bg-white hover:bg-gray-50 border border-gray-200 rounded-full py-3"
+                className="w-full mode-toggle rounded-full py-4 text-lg font-semibold"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </Button>
             </div>
             
-            <div className="text-center space-y-4 p-6 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl border-2 border-yellow-200">
-              <p className="font-bold text-lg text-gray-800">High Quality {getPlanLimits(getUserPlan().type).hdDownloads ? '' : '🔒'}</p>
-              <p className="text-gray-600">Original Size</p>
-              <p className="text-gray-500 text-sm">{getEstimatedFileSize('high')}</p>
+            <div className="text-center space-y-6 p-8 yellow-highlight rounded-3xl shadow-minimal">
+              <p className="font-bold text-xl text-gray-900">High Quality {getPlanLimits(getUserPlan().type).hdDownloads ? '' : '🔒'}</p>
+              <p className="text-gray-700 text-lg">Original Size</p>
+              <p className="text-gray-600">{getEstimatedFileSize('high')}</p>
               <Button
                 onClick={() => downloadImage(processedImage, 'high')}
-                className="btn-secondary w-full rounded-full py-3"
+                className="btn-secondary w-full rounded-full py-4 text-lg font-semibold"
               >
                 <Download className="w-4 h-4 mr-2" />
                 {getPlanLimits(getUserPlan().type).hdDownloads ? 'Download HD' : 'HD (Premium)'}

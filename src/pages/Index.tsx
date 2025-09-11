@@ -12,74 +12,73 @@ const Index = () => {
   const [activeMode, setActiveMode] = useState<'single' | 'batch' | 'generate'>('single');
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-white">
       <Header />
       
       {/* Hero Section */}
-      <section className="hero-section py-16 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
+      <section className="hero-section section-padding">
+        <div className="container-max">
+          <div className="text-center mb-16 relative z-10">
             {activeMode === 'generate' ? (
               <>
-                <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                <h2 className="hero-title text-5xl md:text-7xl text-gray-900 mb-8">
                   Create Amazing Images
-                  <span className="block bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
-                    with AI - Free!
+                  <span className="block bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                    with AI
                   </span>
                 </h2>
-                <p className="text-gray-300 text-xl max-w-3xl mx-auto mb-8 leading-relaxed">
+                <p className="hero-subtitle text-xl md:text-2xl max-w-4xl mx-auto mb-12">
                   Generate stunning, unique images from text descriptions using advanced AI technology. 
-                  Perfect for creative projects, social media, and professional use!
+                  Perfect for creative projects, social media, and professional use.
                 </p>
               </>
             ) : (
               <>
-                <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                <h2 className="hero-title text-5xl md:text-7xl text-gray-900 mb-8">
                   Remove Image
-                  <span className="block bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+                  <span className="block bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
                     Background
                   </span>
                 </h2>
-                <div className="flex items-center justify-center gap-2 mb-6">
-                  <span className="bg-slate-800 text-white px-4 py-2 rounded-full text-lg font-semibold">
+                <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+                  <span className="feature-badge px-6 py-3 rounded-full text-lg font-semibold text-gray-700">
                     100% Automatically and
                   </span>
-                  <span className="bg-gradient-to-r from-green-400 to-green-600 text-slate-900 px-4 py-2 rounded-full text-lg font-bold">
+                  <span className="yellow-highlight px-6 py-3 rounded-full text-lg font-bold">
                     Free
                   </span>
                 </div>
-                <p className="text-gray-300 text-xl max-w-3xl mx-auto mb-8 leading-relaxed">
+                <p className="hero-subtitle text-xl md:text-2xl max-w-4xl mx-auto mb-12">
                   Upload your images and let our advanced AI remove backgrounds instantly. 
-                  Perfect for e-commerce, social media, and professional use. No watermarks, no limits!
+                  Perfect for e-commerce, social media, and professional use.
                 </p>
               </>
             )}
             
             {/* Features */}
-            <div className="flex flex-wrap justify-center gap-6 mb-12">
-              <div className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-full shadow-sm">
-                <Zap className="w-5 h-5 text-green-400" />
-                <span className="text-gray-300 font-medium">Lightning Fast</span>
+            <div className="flex flex-wrap justify-center gap-6 mb-16">
+              <div className="feature-badge flex items-center gap-3 px-6 py-3 rounded-full">
+                <Zap className="w-5 h-5 text-blue-500" />
+                <span className="text-gray-700 font-medium">Lightning Fast</span>
               </div>
-              <div className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-full shadow-sm">
+              <div className="feature-badge flex items-center gap-3 px-6 py-3 rounded-full">
                 <Shield className="w-5 h-5 text-green-500" />
-                <span className="text-gray-300 font-medium">100% Secure</span>
+                <span className="text-gray-700 font-medium">100% Secure</span>
               </div>
-              <div className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-full shadow-sm">
-                <Star className="w-5 h-5 text-blue-500" />
-                <span className="text-gray-300 font-medium">HD Quality</span>
+              <div className="feature-badge flex items-center gap-3 px-6 py-3 rounded-full">
+                <Star className="w-5 h-5 text-yellow-500" />
+                <span className="text-gray-700 font-medium">HD Quality</span>
               </div>
             </div>
             
             {/* Mode Toggle */}
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
+            <div className="flex flex-wrap justify-center gap-4 mb-12">
               <Button
                 onClick={() => setActiveMode('single')}
-                variant={activeMode === 'single' ? "default" : "outline"}
-                className={`px-6 py-3 text-lg font-semibold rounded-full transition-all ${
+                className={`px-8 py-4 text-lg font-semibold rounded-full transition-all ${
                   activeMode === 'single' 
-                    ? "btn-primary" 
-                    : "bg-slate-800 hover:bg-slate-700 text-gray-300 border-slate-600"
+                    ? "mode-toggle active" 
+                    : "mode-toggle"
                 }`}
               >
                 <Upload className="w-5 h-5 mr-2" />
@@ -87,11 +86,10 @@ const Index = () => {
               </Button>
               <Button
                 onClick={() => setActiveMode('batch')}
-                variant={activeMode === 'batch' ? "default" : "outline"}
-                className={`px-6 py-3 text-lg font-semibold rounded-full transition-all ${
+                className={`px-8 py-4 text-lg font-semibold rounded-full transition-all ${
                   activeMode === 'batch' 
-                    ? "btn-primary" 
-                    : "bg-slate-800 hover:bg-slate-700 text-gray-300 border-slate-600"
+                    ? "mode-toggle active" 
+                    : "mode-toggle"
                 }`}
               >
                 <Layers className="w-5 h-5 mr-2" />
@@ -99,11 +97,10 @@ const Index = () => {
               </Button>
               <Button
                 onClick={() => setActiveMode('generate')}
-                variant={activeMode === 'generate' ? "default" : "outline"}
-                className={`px-6 py-3 text-lg font-semibold rounded-full transition-all ${
+                className={`px-8 py-4 text-lg font-semibold rounded-full transition-all ${
                   activeMode === 'generate' 
                     ? "btn-secondary" 
-                    : "bg-slate-800 hover:bg-slate-700 text-gray-300 border-slate-600"
+                    : "mode-toggle"
                 }`}
               >
                 <Sparkles className="w-5 h-5 mr-2" />
@@ -115,7 +112,7 @@ const Index = () => {
       </section>
       
       {/* Main Content */}
-      <main className="container mx-auto px-4 pb-16">
+      <main className="container-max px-4 pb-20">
         {activeMode === 'generate' ? (
           <ImageGenerator />
         ) : activeMode === 'batch' ? (
