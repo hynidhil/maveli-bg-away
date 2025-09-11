@@ -70,12 +70,5 @@ const Header = () => {
     </header>
   );
 };
-            ClearPix
-          </h1>
-        </div>
-      </div>
-    </header>
-  );
-};
 
 export default Header;
