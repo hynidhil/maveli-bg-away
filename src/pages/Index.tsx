@@ -24,6 +24,8 @@ const Index = () => {
   const [showBackgroundEffects, setShowBackgroundEffects] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMessage, setAuthMessage] = useState<string>('');
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
