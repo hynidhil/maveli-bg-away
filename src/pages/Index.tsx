@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Header from '@/components/Header';
+import AuthModal from '@/components/AuthModal';
 import BatchImageUploader from '@/components/BatchImageUploader';
 import ImageGenerator from '@/components/ImageGenerator';
 import Footer from '@/components/Footer';
