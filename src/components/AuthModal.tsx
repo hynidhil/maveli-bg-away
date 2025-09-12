@@ -4,8 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { signUp, signIn } from '@/utils/supabasePlanManager';
+import { User, Mail, Lock, Eye, EyeOff, Chrome } from 'lucide-react';
+import { signUp, signIn, signInWithGoogle } from '@/utils/supabasePlanManager';
 import { toast } from '@/components/ui/sonner';
 import { setUserAuthenticated } from '@/utils/planManager';
 
@@ -23,6 +23,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, messa
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    
+    try {
+      const { error } = await signInWithGoogle();
+      
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      
+      // The redirect will handle the rest
+      toast.success('Redirecting to Google...');
+    } catch (error) {
+      toast.error('An error occurred during Google sign in');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +153,27 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, messa
           </TabsList>
           
           <TabsContent value="signin" className="space-y-4">
+            <Button
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full border-gray-300 hover:bg-gray-50"
+            >
+              <Chrome className="w-4 h-4 mr-2" />
+              Continue with Google
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with email
+                </span>
+              </div>
+            </div>
+            
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signin-email">Email</Label>
@@ -184,6 +225,27 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, messa
           </TabsContent>
           
           <TabsContent value="signup" className="space-y-4">
+            <Button
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full border-gray-300 hover:bg-gray-50"
+            >
+              <Chrome className="w-4 h-4 mr-2" />
+              Continue with Google
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with email
+                </span>
+              </div>
+            </div>
+            
             <form onSubmit={handleSignUp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
