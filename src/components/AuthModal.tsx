@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { signUp, signIn } from '@/utils/supabasePlanManager';
 import { toast } from '@/components/ui/sonner';
+import { setUserAuthenticated } from '@/utils/planManager';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
       if (data.user) {
         toast.success('Signed in successfully!');
+        setUserAuthenticated(true);
         onSuccess?.();
         onClose();
         window.location.reload();
@@ -83,6 +85,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
       if (data.user) {
         toast.success('Account created successfully!');
+        setUserAuthenticated(true);
         onSuccess?.();
         onClose();
         window.location.reload();
@@ -112,9 +115,15 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="w-6 h-6 text-green-500" />
-            Welcome to ClearPix
+            {message ? 'Sign Up Required' : 'Welcome to ClearPix'}
           </DialogTitle>
         </DialogHeader>
+        
+        {message && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <p className="text-blue-800 text-sm">{message}</p>
+          </div>
+        )}
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2">

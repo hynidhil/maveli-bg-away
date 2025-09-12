@@ -101,6 +101,15 @@ export const incrementBackgroundRemovalUsage = (): boolean => {
 export const canUseBackgroundRemoval = (): boolean => {
   const plan = getUserPlan();
   
+  // Check if user is authenticated
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  
+  if (!isAuthenticated) {
+    // Non-authenticated users get only 1 free removal
+    const guestUsage = parseInt(localStorage.getItem('guestBackgroundRemovals') || '0');
+    return guestUsage < 1;
+  }
+  
   if (plan.type === 'premium') {
     return true;
   }
@@ -111,6 +120,15 @@ export const canUseBackgroundRemoval = (): boolean => {
 export const getRemainingBackgroundRemovals = (): number => {
   const plan = getUserPlan();
   
+  // Check if user is authenticated
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  
+  if (!isAuthenticated) {
+    // Non-authenticated users get only 1 free removal
+    const guestUsage = parseInt(localStorage.getItem('guestBackgroundRemovals') || '0');
+    return Math.max(0, 1 - guestUsage);
+  }
+  
   if (plan.type === 'premium') {
     return -1; // Unlimited
   }
@@ -118,6 +136,29 @@ export const getRemainingBackgroundRemovals = (): number => {
   return Math.max(0, plan.backgroundRemovalsLimit - plan.backgroundRemovalsUsed);
 };
 
+export const incrementGuestBackgroundRemovalUsage = (): boolean => {
+  const guestUsage = parseInt(localStorage.getItem('guestBackgroundRemovals') || '0');
+  
+  if (guestUsage >= 1) {
+    return false; // Limit reached
+  }
+  
+  localStorage.setItem('guestBackgroundRemovals', (guestUsage + 1).toString());
+  return true;
+};
+
+export const getGuestRemainingRemovals = (): number => {
+  const guestUsage = parseInt(localStorage.getItem('guestBackgroundRemovals') || '0');
+  return Math.max(0, 1 - guestUsage);
+};
+
+export const isUserAuthenticated = (): boolean => {
+  return localStorage.getItem('isAuthenticated') === 'true';
+};
+
+export const setUserAuthenticated = (authenticated: boolean): void => {
+  localStorage.setItem('isAuthenticated', authenticated.toString());
+};
 export const upgradeToPremium = (): void => {
   const premiumPlan: UserPlan = {
     type: 'premium',

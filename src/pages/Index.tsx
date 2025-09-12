@@ -95,11 +95,19 @@ const Index = () => {
   };
 
   const downloadImage = (imageUrl: string, quality: 'low' | 'medium' | 'high') => {
+    const isAuthenticated = isUserAuthenticated();
+    
+    if (quality === 'high' && !isAuthenticated) {
+      setAuthMessage('HD downloads require an account. Sign up for free to unlock HD downloads!');
+      setShowAuthModal(true);
+      return;
+    }
+    
     const plan = getUserPlan();
     const planLimits = getPlanLimits(plan.type);
     
-    if (quality === 'high' && !planLimits.hdDownloads) {
-      setShowPlanLimitModal(true);
+    if (quality === 'high' && isAuthenticated && !planLimits.hdDownloads) {
+      // Show upgrade message for authenticated users without premium
       return;
     }
     
@@ -146,11 +154,11 @@ const Index = () => {
   };
 
   const handleManualEditComplete = (editedImageUrl: string) => {
-    const plan = getUserPlan();
-    const planLimits = getPlanLimits(plan.type);
+    const isAuthenticated = isUserAuthenticated();
     
-    if (!planLimits.manualEditing) {
-      setShowPlanLimitModal(true);
+    if (!isAuthenticated) {
+      setAuthMessage('Manual editing requires an account. Sign up for free to access editing tools!');
+      setShowAuthModal(true);
       return;
     }
     
@@ -159,16 +167,22 @@ const Index = () => {
   };
 
   const handleBackgroundEffectApplied = (imageWithBackground: string) => {
-    const plan = getUserPlan();
-    const planLimits = getPlanLimits(plan.type);
+    const isAuthenticated = isUserAuthenticated();
     
-    if (!planLimits.backgroundEffects) {
-      setShowPlanLimitModal(true);
+    if (!isAuthenticated) {
+      setAuthMessage('Background effects require an account. Sign up for free to access background effects!');
+      setShowAuthModal(true);
       return;
     }
     
     setProcessedImage(imageWithBackground);
     setShowBackgroundEffects(false);
+  };
+
+  const getRemainingText = () => {
+    const isAuthenticated = isUserAuthenticated();
+    const remaining = isAuthenticated ? getUserPlan().backgroundRemovalsLimit - getUserPlan().backgroundRemovalsUsed : getGuestRemainingRemovals();
+    return isAuthenticated ? `${remaining} free removals left` : `${remaining} free removal left (Sign up for 2 more!)`;
   };
 
   const resetAll = () => {
@@ -204,11 +218,10 @@ const Index = () => {
     <div className="min-h-screen bg-black">
       <Header />
       
-      <PlanStatus onUpgradeClick={() => setShowPlanLimitModal(true)} />
-      
-      <PlanLimitModal
-        isOpen={showPlanLimitModal}
-        onClose={() => setShowPlanLimitModal(false)}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        message={authMessage}
       />
       
       {/* Hero Section */}
@@ -300,6 +313,9 @@ const Index = () => {
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 border border-gray-700 space-y-6">
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2 justify-center">
+                    <div className="w-full text-center mb-2">
+                      <span className="text-xs text-gray-400">{getRemainingText()}</span>
+                    </div>
                     <Button
                       onClick={() => document.getElementById('hero-file-input')?.click()}
                       size="sm"
