@@ -32,15 +32,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, messa
       
       if (error) {
         toast.error(error.message);
+        setIsLoading(false);
         return;
       }
       
-      // The redirect will handle the rest
-      toast.success('Redirecting to Google...');
+      // Don't set loading to false here as user will be redirected
+      // The redirect will handle the authentication
     } catch (error) {
-      toast.error('An error occurred during Google sign in');
-    } finally {
+      console.error('Google sign in error:', error);
+      toast.error('Failed to initiate Google sign in');
       setIsLoading(false);
+    } finally {
+      // Don't set loading to false here for successful redirects
     }
   };
 
@@ -186,6 +189,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, messa
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
+                    disabled={isLoading}
                     required
                   />
                 </div>
@@ -202,6 +206,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, messa
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
+                    disabled={isLoading}
                     required
                   />
                   <button
