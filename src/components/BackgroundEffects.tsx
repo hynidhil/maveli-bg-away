@@ -159,15 +159,24 @@ const BackgroundEffects: React.FC<BackgroundEffectsProps> = ({
   };
 
   const handleApply = () => {
-    if (previewImage) {
+    if (!previewImage) {
+      console.error('No preview image available');
+      return;
+    }
+    
+    try {
       onApply(previewImage);
+    } catch (error) {
+      console.error('Error applying background:', error);
     }
   };
 
   // Generate initial preview
   React.useEffect(() => {
-    generatePreview(selectedEffect);
-  }, [processedImageUrl]);
+    if (processedImageUrl) {
+      generatePreview(selectedEffect);
+    }
+  }, [processedImageUrl, selectedEffect]);
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
