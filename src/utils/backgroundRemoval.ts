@@ -13,18 +13,36 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
       throw new Error('Remove.bg API key not configured. Please check your environment configuration.');
     }
 
+    // Mobile detection and optimization
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('Mobile device detected:', isMobile);
+
     // Convert image to canvas first to get proper format and size
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
     if (!ctx) throw new Error('Could not get canvas context');
     
-    // Set canvas dimensions to match image
-    canvas.width = imageElement.naturalWidth;
-    canvas.height = imageElement.naturalHeight;
+    // Mobile-optimized canvas dimensions
+    let width = imageElement.naturalWidth;
+    let height = imageElement.naturalHeight;
     
-    // Draw image to canvas
-    ctx.drawImage(imageElement, 0, 0);
+    if (isMobile) {
+      // Limit canvas size for mobile to prevent memory issues
+      const maxDimension = 2048;
+      if (width > maxDimension || height > maxDimension) {
+        const ratio = Math.min(maxDimension / width, maxDimension / height);
+        width = Math.floor(width * ratio);
+        height = Math.floor(height * ratio);
+        console.log(`Mobile optimization: resized to ${width}x${height}`);
+      }
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Draw image to canvas with mobile optimization
+    ctx.drawImage(imageElement, 0, 0, width, height);
     
     // Convert canvas to blob
     const imageBlob = await new Promise<Blob>((resolve, reject) => {
@@ -41,17 +59,18 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
       );
     });
 
-    // Check file size
-    if (imageBlob.size > MAX_FILE_SIZE) {
-      throw new Error('Image file is too large. Please use an image smaller than 12MB.');
+    // Check file size with mobile-specific limits
+    const maxFileSize = isMobile ? 5 * 1024 * 1024 : MAX_FILE_SIZE; // 5MB for mobile, 12MB for desktop
+    if (imageBlob.size > maxFileSize) {
+      throw new Error(`Image file is too large. Please use an image smaller than ${isMobile ? '5MB' : '12MB'}.`);
     }
 
     console.log(`Processing image with Remove.bg API (${Math.round(imageBlob.size / 1024)}KB)...`);
 
-    // Prepare form data for Remove.bg API
+    // Prepare form data for Remove.bg API with mobile optimizations
     const formData = new FormData();
     formData.append('image_file', imageBlob, 'image.png');
-    formData.append('size', 'auto');
+    formData.append('size', isMobile ? 'preview' : 'auto'); // Use preview size for mobile
     formData.append('format', 'png');
     formData.append('type', 'auto');
     formData.append('crop', 'false');
@@ -61,48 +80,67 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     formData.append('roi', '0% 0% 100% 100%');
     formData.append('position', 'center');
 
-    // Make API request to Remove.bg
-    const response = await fetch('https://api.remove.bg/v1.0/removebg', {
-      method: 'POST',
-      headers: {
-        'X-Api-Key': apiKey,
-      },
-      body: formData,
-    });
+    // Mobile-optimized API request with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), isMobile ? 45000 : 30000); // 45s for mobile, 30s for desktop
 
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': apiKey,
+        },
+        body: formData,
+        signal: controller.signal,
+      });
       
-      try {
-        const errorData = await response.json();
-        if (errorData.errors && errorData.errors.length > 0) {
-          errorMessage = errorData.errors[0].title || errorMessage;
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
+        try {
+          const errorData = await response.json();
+          if (errorData.errors && errorData.errors.length > 0) {
+            errorMessage = errorData.errors[0].title || errorMessage;
+          }
+        } catch (e) {
+          // If we can't parse the error response, use the default message
         }
-      } catch (e) {
-        // If we can't parse the error response, use the default message
+        
+        // Handle specific error cases with mobile-friendly messages
+        if (response.status === 402) {
+          errorMessage = 'API quota exceeded. Please check your Remove.bg account credits.';
+        } else if (response.status === 403) {
+          errorMessage = 'Invalid API key. Please check your Remove.bg API key.';
+        } else if (response.status === 400) {
+          errorMessage = 'Invalid image format or size. Please try a different image.';
+        } else if (response.status === 429) {
+          errorMessage = 'Too many requests. Please wait a moment and try again.';
+        } else if (response.status >= 500) {
+          errorMessage = 'Server error. Please try again in a moment.';
+        }
+        
+        throw new Error(errorMessage);
       }
+
+      // Get the processed image as blob
+      const processedBlob = await response.blob();
       
-      // Handle specific error cases
-      if (response.status === 402) {
-        errorMessage = 'API quota exceeded. Please check your Remove.bg account credits.';
-      } else if (response.status === 403) {
-        errorMessage = 'Invalid API key. Please check your Remove.bg API key.';
-      } else if (response.status === 400) {
-        errorMessage = 'Invalid image format or size. Please try a different image.';
+      if (processedBlob.size === 0) {
+        throw new Error('Received empty response from Remove.bg API');
       }
+
+      console.log('Background removal completed successfully with Remove.bg API');
+      return processedBlob;
       
-      throw new Error(errorMessage);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Request timeout. Please try with a smaller image or better internet connection.');
+      }
+      throw fetchError;
     }
-
-    // Get the processed image as blob
-    const processedBlob = await response.blob();
-    
-    if (processedBlob.size === 0) {
-      throw new Error('Received empty response from Remove.bg API');
-    }
-
-    console.log('Background removal completed successfully with Remove.bg API');
-    return processedBlob;
 
   } catch (error) {
     console.error('Error in Remove.bg background removal:', error);

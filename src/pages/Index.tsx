@@ -28,18 +28,40 @@ const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMessage, setAuthMessage] = useState<string>('');
   const [downloadFormat, setDownloadFormat] = useState<'png' | 'jpg' | 'webp'>('png');
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      // Check file size for mobile optimization
-      const maxSize = 10 * 1024 * 1024; // 10MB for mobile
-      if (file.size > maxSize) {
-        setError('Image file is too large. Please use an image smaller than 10MB for mobile devices.');
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (JPG, PNG, WEBP)');
+      return;
+    }
+    
+    // Mobile-specific file size limits
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const maxSize = isMobile ? 5 * 1024 * 1024 : 10 * 1024 * 1024; // 5MB for mobile, 10MB for desktop
+    
+    if (file.size > maxSize) {
+      setError(`Image file is too large. Please use an image smaller than ${isMobile ? '5MB' : '10MB'}.`);
+      return;
+    }
+    
+    // Check image dimensions for mobile
+    const img = new Image();
+    img.onload = () => {
+      const maxDimension = isMobile ? 2048 : 4096;
+      if (img.naturalWidth > maxDimension || img.naturalHeight > maxDimension) {
+        setError(`Image dimensions too large for mobile. Please use an image smaller than ${maxDimension}x${maxDimension} pixels.`);
         return;
       }
       
+      // Proceed with file processing
       setUploadedFile(file);
+      resetRetryCount(); // Reset retry count for new image
       const reader = new FileReader();
       reader.onload = (e) => {
         setUploadedImage(e.target?.result as string);
@@ -49,10 +71,17 @@ const Index = () => {
         setShowBackgroundEffects(false);
         setShowComparison(false);
       };
+      reader.onerror = () => {
+        setError('Failed to read image file. Please try again.');
+      };
       reader.readAsDataURL(file);
-    } else {
-      setError('Please select a valid image file (JPG, PNG, WEBP)');
-    }
+    };
+    
+    img.onerror = () => {
+      setError('Invalid image file. Please select a valid image.');
+    };
+    
+    img.src = URL.createObjectURL(file);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -94,6 +123,7 @@ const Index = () => {
     
     if (!uploadedFile) {
       console.log('No uploaded file found');
+      setError('Please select an image first');
       return;
     }
     
@@ -121,14 +151,32 @@ const Index = () => {
     setIsProcessing(true);
     setError('');
     
+    // Mobile-specific timeout and error handling
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const timeoutDuration = isMobile ? 60000 : 30000; // 60s for mobile, 30s for desktop
+    
     try {
       console.log('Loading image...');
-      const imageElement = await loadImage(uploadedFile);
+      
+      // Create timeout promise for mobile
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Processing timeout. Please try with a smaller image or check your internet connection.'));
+        }, timeoutDuration);
+      });
+      
+      // Mobile-optimized image loading
+      const imageLoadPromise = loadImage(uploadedFile);
+      const imageElement = await Promise.race([imageLoadPromise, timeoutPromise]) as HTMLImageElement;
+      
       console.log('Image loaded, starting background removal...');
-      const processedBlob = await removeBackground(imageElement);
+      
+      // Mobile-optimized background removal with timeout
+      const backgroundRemovalPromise = removeBackground(imageElement);
+      const processedBlob = await Promise.race([backgroundRemovalPromise, timeoutPromise]) as Blob;
       
       if (!processedBlob || processedBlob.size === 0) {
-        throw new Error('Background removal returned empty result');
+        throw new Error('Background removal returned empty result. Please try with a different image.');
       }
       
       console.log('Background removal successful, blob size:', processedBlob.size);
@@ -141,13 +189,62 @@ const Index = () => {
       const processedUrl = URL.createObjectURL(processedBlob);
       setProcessedImage(processedUrl);
       console.log('Processed image URL created');
+      
+      // Clean up previous blob URLs to prevent memory leaks on mobile
+      if (processedImage) {
+        URL.revokeObjectURL(processedImage);
+      }
+      
     } catch (err) {
       console.error('Error during background removal:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to remove background';
+      let errorMessage = 'Failed to remove background';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('timeout')) {
+          errorMessage = 'Processing took too long. Please try with a smaller image or better internet connection.';
+        } else if (err.message.includes('API')) {
+          errorMessage = 'Service temporarily unavailable. Please try again in a moment.';
+        } else if (err.message.includes('size') || err.message.includes('large')) {
+          errorMessage = 'Image too large for mobile processing. Please use a smaller image (under 5MB).';
+        } else if (err.message.includes('format')) {
+          errorMessage = 'Unsupported image format. Please use JPG, PNG, or WEBP.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
       setError(errorMessage);
+      
+      // Reset processing state without reloading
+      setIsProcessing(false);
+      return;
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Mobile retry mechanism
+  const handleRetry = async () => {
+    if (retryCount >= 2) {
+      setError('Maximum retry attempts reached. Please try with a smaller image or different format.');
+      return;
+    }
+    
+    setIsRetrying(true);
+    setRetryCount(prev => prev + 1);
+    setError('');
+    
+    // Wait a moment before retrying
+    setTimeout(() => {
+      handleRemoveBackground();
+      setIsRetrying(false);
+    }, 2000);
+  };
+
+  // Reset retry count when new image is uploaded
+  const resetRetryCount = () => {
+    setRetryCount(0);
+    setError('');
   };
 
   const downloadImage = (imageUrl: string, quality: 'low' | 'medium' | 'high') => {
@@ -498,9 +595,22 @@ const Index = () => {
 
                   {/* Error Display */}
                   {error && (
-                    <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-800 rounded-lg">
-                      <AlertCircle className="w-4 h-4 text-red-400" />
-                      <span className="text-sm text-red-300">{error}</span>
+                    <div className="p-3 bg-red-900/20 border border-red-800 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-4 h-4 text-red-400" />
+                        <span className="text-sm text-red-300">{error}</span>
+                      </div>
+                      {/* Mobile retry button */}
+                      {retryCount < 2 && !isProcessing && (
+                        <Button
+                          onClick={handleRetry}
+                          disabled={isRetrying}
+                          size="sm"
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs touch-manipulation"
+                        >
+                          {isRetrying ? 'Retrying...' : `Retry (${2 - retryCount} attempts left)`}
+                        </Button>
+                      )}
                     </div>
                   )}
 
