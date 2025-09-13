@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { getUserPlan, canUseBackgroundRemoval, incrementBackgroundRemovalUsage, getPlanLimits } from '@/utils/planManager';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
+import { isUserAuthenticated, incrementGuestBackgroundRemovalUsage, getGuestRemainingRemovals } from '@/utils/planManager';
 import ManualEditor from '@/components/ManualEditor';
 import BackgroundEffects from '@/components/BackgroundEffects';
 import PlanLimitModal from '@/components/PlanLimitModal';
@@ -69,7 +70,23 @@ const Index = () => {
   const handleRemoveBackground = async () => {
     if (!uploadedFile) return;
     
-    if (!canUseBackgroundRemoval()) {
+    const isAuthenticated = isUserAuthenticated();
+    
+    if (!isAuthenticated) {
+      // For guest users, check guest limit
+      if (!incrementGuestBackgroundRemovalUsage()) {
+        setShowPlanLimitModal(true);
+        return;
+      }
+    } else {
+      // For authenticated users, check their plan
+      if (!canUseBackgroundRemoval()) {
+        setShowPlanLimitModal(true);
+        return;
+      }
+    }
+    
+    if (isAuthenticated && !canUseBackgroundRemoval()) {
       setShowPlanLimitModal(true);
       return;
     }
@@ -86,6 +103,11 @@ const Index = () => {
       }
       
       incrementBackgroundRemovalUsage();
+      if (!isAuthenticated) {
+        // Already incremented guest usage above
+      } else {
+        incrementBackgroundRemovalUsage();
+      }
       const processedUrl = URL.createObjectURL(processedBlob);
       setProcessedImage(processedUrl);
     } catch (err) {
@@ -184,8 +206,14 @@ const Index = () => {
 
   const getRemainingText = () => {
     const isAuthenticated = isUserAuthenticated();
-    const remaining = isAuthenticated ? getUserPlan().backgroundRemovalsLimit - getUserPlan().backgroundRemovalsUsed : getGuestRemainingRemovals();
-    return isAuthenticated ? `${remaining} free removals left` : `${remaining} free removal left (Sign up for 2 more!)`;
+    if (isAuthenticated) {
+      const plan = getUserPlan();
+      const remaining = plan.backgroundRemovalsLimit - plan.backgroundRemovalsUsed;
+      return `${remaining} free removals left`;
+    } else {
+      const remaining = getGuestRemainingRemovals();
+      return `${remaining} free removal left (Sign up for 2 more!)`;
+    }
   };
 
   const resetAll = () => {
