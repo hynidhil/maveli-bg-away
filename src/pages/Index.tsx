@@ -32,6 +32,13 @@ const Index = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
+      // Check file size for mobile optimization
+      const maxSize = 10 * 1024 * 1024; // 10MB for mobile
+      if (file.size > maxSize) {
+        setError('Image file is too large. Please use an image smaller than 10MB for mobile devices.');
+        return;
+      }
+      
       setUploadedFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -43,6 +50,8 @@ const Index = () => {
         setShowComparison(false);
       };
       reader.readAsDataURL(file);
+    } else {
+      setError('Please select a valid image file (JPG, PNG, WEBP)');
     }
   };
 
@@ -66,6 +75,17 @@ const Index = () => {
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+  };
+
+  // Mobile-specific touch event handlers
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    // Trigger file input on mobile touch
+    document.getElementById('hero-file-input')?.click();
   };
 
   const handleRemoveBackground = async () => {
@@ -289,48 +309,48 @@ const Index = () => {
       {/* Hero Section */}
       <section className="hero-section section-padding pt-16 bg-black">
         <div className="container-max">
-          <div className="grid lg:grid-cols-3 gap-8 items-center min-h-[80vh]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 items-center min-h-[80vh] px-4 md:px-0">
             {/* Left Side - Text Content */}
-            <div className="space-y-6">
-              <h2 className="hero-title text-4xl md:text-6xl text-white leading-tight animate-fade-in">
+            <div className="space-y-4 md:space-y-6 text-center md:text-left">
+              <h2 className="hero-title text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-tight animate-fade-in">
                 Remove Image
                 <span className="block bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent animate-gradient">
                   Background
                 </span>
               </h2>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="feature-badge px-3 py-1 rounded-full text-sm font-semibold text-white">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-3">
+                <span className="feature-badge px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-semibold text-white">
                   100% Automatically and
                 </span>
-                <span className="green-highlight px-3 py-1 rounded-full text-sm font-bold text-green-400">
+                <span className="green-highlight px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-bold text-green-400">
                   Free
                 </span>
               </div>
-              <p className="hero-subtitle text-sm text-gray-300 leading-relaxed">
+              <p className="hero-subtitle text-sm md:text-base text-gray-300 leading-relaxed max-w-md mx-auto md:mx-0">
                 Upload your images and let our advanced AI remove backgrounds instantly. 
                 Perfect for e-commerce, social media, and professional use.
               </p>
               
               {/* Features */}
-              <div className="flex flex-wrap gap-4">
-                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in">
-                  <Zap className="w-4 h-4 text-white animate-pulse" />
-                  <span className="text-white font-medium">Lightning Fast</span>
+              <div className="flex flex-wrap justify-center md:justify-start gap-2 md:gap-4">
+                <div className="feature-badge flex items-center gap-2 px-3 md:px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in">
+                  <Zap className="w-3 h-3 md:w-4 md:h-4 text-white animate-pulse" />
+                  <span className="text-white font-medium text-xs md:text-sm">Lightning Fast</span>
                 </div>
-                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in" style={{animationDelay: '0.1s'}}>
-                  <Shield className="w-4 h-4 text-white animate-pulse" />
-                  <span className="text-white font-medium">100% Secure</span>
+                <div className="feature-badge flex items-center gap-2 px-3 md:px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in" style={{animationDelay: '0.1s'}}>
+                  <Shield className="w-3 h-3 md:w-4 md:h-4 text-white animate-pulse" />
+                  <span className="text-white font-medium text-xs md:text-sm">100% Secure</span>
                 </div>
-                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in" style={{animationDelay: '0.2s'}}>
-                  <Star className="w-4 h-4 text-white animate-pulse" />
-                  <span className="text-white font-medium">HD Quality</span>
+                <div className="feature-badge flex items-center gap-2 px-3 md:px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in" style={{animationDelay: '0.2s'}}>
+                  <Star className="w-3 h-3 md:w-4 md:h-4 text-white animate-pulse" />
+                  <span className="text-white font-medium text-xs md:text-sm">HD Quality</span>
                 </div>
               </div>
             </div>
             
             {/* Middle - Image Card with Split Background */}
-            <div className="relative flex justify-center">
-              <div className="relative w-full max-w-sm aspect-[3/4] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="relative flex justify-center order-2 md:order-2 lg:order-2">
+              <div className="relative w-full max-w-xs sm:max-w-sm aspect-[3/4] rounded-2xl shadow-2xl overflow-hidden">
                 {/* Split background */}
                 <div className="absolute inset-0 flex">
                   <div className="w-1/2 bg-white"></div>
@@ -346,13 +366,13 @@ const Index = () => {
             </div>
             
             {/* Right Side - Preview */}
-            <div className="relative">
-              {/* Decorative elements like remove.bg */}
-              <div className="absolute -top-8 -right-8 w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full opacity-30 -z-10"></div>
-              <div className="absolute top-1/2 -left-4 w-8 h-8 bg-gradient-to-br from-green-400 to-green-500 rounded-full opacity-40 -z-10"></div>
-              <div className="absolute -bottom-8 -right-4 w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 transform rotate-45 opacity-20 -z-10"></div>
+            <div className="relative order-3 md:order-3 lg:order-3">
+              {/* Decorative elements like remove.bg - hidden on mobile */}
+              <div className="hidden md:block absolute -top-8 -right-8 w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full opacity-30 -z-10"></div>
+              <div className="hidden md:block absolute top-1/2 -left-4 w-8 h-8 bg-gradient-to-br from-green-400 to-green-500 rounded-full opacity-40 -z-10"></div>
+              <div className="hidden md:block absolute -bottom-8 -right-4 w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 transform rotate-45 opacity-20 -z-10"></div>
               {!uploadedImage ? (
-                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 border border-gray-700">
+                <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-4 md:p-6 lg:p-8 border border-gray-700">
                   <input
                     type="file"
                     accept="image/*"
@@ -362,20 +382,22 @@ const Index = () => {
                   />
                   
                   <div 
-                    className="text-center cursor-pointer"
+                    className="text-center cursor-pointer touch-manipulation"
                     onClick={() => document.getElementById('hero-file-input')?.click()}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
                   >
-                    <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center mx-auto mb-6 hover:from-green-600 hover:to-green-700 transition-all">
-                      <Upload className="w-12 h-12 text-white" />
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center mx-auto mb-4 md:mb-6 hover:from-green-600 hover:to-green-700 transition-all touch-manipulation">
+                      <Upload className="w-10 h-10 md:w-12 md:h-12 text-white" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-4">Ready to Start?</h3>
-                    <p className="text-gray-300 mb-6">
+                    <h3 className="text-xl md:text-2xl font-bold text-white mb-3 md:mb-4">Ready to Start?</h3>
+                    <p className="text-sm md:text-base text-gray-300 mb-4 md:mb-6 px-2">
                       Upload your image and start removing backgrounds instantly with our AI-powered tool.
                     </p>
-                    <div className="space-y-4">
-                      <Button className="btn-primary w-full py-3 text-lg font-bold rounded-full">
+                    <div className="space-y-3 md:space-y-4">
+                      <Button className="btn-primary w-full py-2 md:py-3 text-base md:text-lg font-bold rounded-full touch-manipulation">
                         Start Creating
                       </Button>
                     </div>
@@ -452,22 +474,22 @@ const Index = () => {
 
                   {/* Image Preview */}
                   {uploadedImage && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-300">Original</h4>
+                        <h4 className="text-xs md:text-sm font-medium text-gray-300">Original</h4>
                         <img
                           src={uploadedImage}
                           alt="Original"
-                          className="w-full h-48 object-cover rounded-lg border border-gray-600"
+                          className="w-full h-40 md:h-48 object-cover rounded-lg border border-gray-600"
                         />
                       </div>
                       {processedImage && (
                         <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-gray-300">Result</h4>
+                          <h4 className="text-xs md:text-sm font-medium text-gray-300">Result</h4>
                           <img
                             src={processedImage}
                             alt="Processed"
-                            className="w-full h-48 object-cover rounded-lg border border-gray-600"
+                            className="w-full h-40 md:h-48 object-cover rounded-lg border border-gray-600"
                           />
                         </div>
                       )}
@@ -509,14 +531,14 @@ const Index = () => {
                       {/* Format Selection */}
                       <div className="space-y-2">
                         <p className="text-xs text-gray-400">Format:</p>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 flex-wrap">
                           {(['png', 'jpg', 'webp'] as const).map((format) => (
                             <Button
                               key={format}
                               onClick={() => setDownloadFormat(format)}
                               size="sm"
                               variant={downloadFormat === format ? "default" : "outline"}
-                              className={`text-xs px-3 py-1 ${
+                              className={`text-xs px-2 md:px-3 py-1 touch-manipulation ${
                                 downloadFormat === format
                                   ? 'bg-green-600 hover:bg-green-700 text-white'
                                   : 'border-gray-600 text-gray-300 hover:bg-gray-800'
@@ -531,11 +553,11 @@ const Index = () => {
                       {/* Quality Selection */}
                       <div className="space-y-2">
                         <p className="text-xs text-gray-400">Quality:</p>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-1 md:gap-2">
                           <Button
                             onClick={() => downloadImage(processedImage, 'low')}
                             size="sm"
-                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs touch-manipulation"
                           >
                             <Download className="w-3 h-3 mr-1" />
                             Low
@@ -543,15 +565,15 @@ const Index = () => {
                           <Button
                             onClick={() => downloadImage(processedImage, 'medium')}
                             size="sm"
-                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs touch-manipulation"
                           >
                             <Download className="w-3 h-3 mr-1" />
-                            Medium
+                            Med
                           </Button>
                           <Button
                             onClick={() => downloadImage(processedImage, 'high')}
                             size="sm"
-                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs touch-manipulation"
                           >
                             <Download className="w-3 h-3 mr-1" />
                             HD
