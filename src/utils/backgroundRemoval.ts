@@ -6,6 +6,9 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     console.log('Starting professional background removal with Remove.bg API...');
     
     const apiKey = import.meta.env.VITE_REMOVEBG_API_KEY;
+    console.log('API Key loaded:', apiKey ? 'Yes' : 'No');
+    console.log('API Key value:', apiKey);
+    
     if (!apiKey) {
       throw new Error('Remove.bg API key not configured. Please check your environment configuration.');
     }

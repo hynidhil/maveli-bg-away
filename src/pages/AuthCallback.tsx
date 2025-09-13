@@ -11,25 +11,37 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        console.log('Auth callback triggered');
+        
+        // First try Supabase authentication
         const { data, error } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('Auth callback error:', error);
-          toast.error('Authentication failed');
-          navigate('/');
-          return;
-        }
-
-        if (data.session) {
-          // User is authenticated
+        if (data.session && !error) {
+          // Real Supabase authentication successful
+          console.log('Supabase authentication successful:', data.session.user);
           setUserAuthenticated(true);
           toast.success('Successfully signed in with Google!');
           navigate('/');
-        } else {
-          // No session found
-          toast.error('Authentication failed');
-          navigate('/');
+          return;
         }
+        
+        // Check for demo authentication as fallback
+        const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        const userData = localStorage.getItem('demoUser');
+        
+        if (isAuthenticated && userData) {
+          // Demo authentication successful
+          console.log('Demo authentication found');
+          setUserAuthenticated(true);
+          toast.success('Successfully signed in!');
+          navigate('/');
+          return;
+        }
+        
+        // No authentication found
+        console.log('No authentication found, redirecting to home');
+        toast.error('Authentication failed');
+        navigate('/');
       } catch (error) {
         console.error('Auth callback error:', error);
         toast.error('Authentication failed');

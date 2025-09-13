@@ -10,6 +10,7 @@ const ImageGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [downloadFormat, setDownloadFormat] = useState<'png' | 'jpg' | 'webp'>('png');
 
   const generateImage = async () => {
     if (!prompt.trim()) {
@@ -126,12 +127,51 @@ const ImageGenerator = () => {
   const downloadImage = () => {
     if (!generatedImage) return;
 
-    const link = document.createElement('a');
-    link.href = generatedImage;
-    link.download = `generated-content-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Create canvas to convert to desired format
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+
+      // Determine MIME type and quality based on format
+      let mimeType = 'image/png';
+      let qualityValue = 1.0;
+      
+      switch (downloadFormat) {
+        case 'jpg':
+          mimeType = 'image/jpeg';
+          qualityValue = 0.9;
+          break;
+        case 'webp':
+          mimeType = 'image/webp';
+          qualityValue = 0.9;
+          break;
+        case 'png':
+        default:
+          mimeType = 'image/png';
+          qualityValue = 1.0;
+          break;
+      }
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `generated-content-${Date.now()}.${downloadFormat}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      }, mimeType, qualityValue);
+    };
+    img.src = generatedImage;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -226,14 +266,34 @@ const ImageGenerator = () => {
                 <Sparkles className="w-5 h-5 text-green-500" />
                 Generated Content
               </CardTitle>
-              <Button
-                onClick={downloadImage}
-                variant="outline"
-                className="border-green-500 text-green-500 hover:bg-green-500/10"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
+              <div className="flex items-center gap-3">
+                {/* Format Selection */}
+                <div className="flex gap-1">
+                  {(['png', 'jpg', 'webp'] as const).map((format) => (
+                    <Button
+                      key={format}
+                      onClick={() => setDownloadFormat(format)}
+                      size="sm"
+                      variant={downloadFormat === format ? "default" : "outline"}
+                      className={`text-xs px-2 py-1 ${
+                        downloadFormat === format
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'border-gray-600 text-gray-300 hover:bg-gray-800'
+                      }`}
+                    >
+                      {format.toUpperCase()}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  onClick={downloadImage}
+                  variant="outline"
+                  className="border-green-500 text-green-500 hover:bg-green-500/10"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

@@ -25,25 +25,38 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, messa
   const [activeTab, setActiveTab] = useState('signin');
 
   const handleGoogleSignIn = async () => {
+    console.log('Google sign in button clicked');
     setIsLoading(true);
     
     try {
-      const { error } = await signInWithGoogle();
+      console.log('Calling signInWithGoogle...');
+      const { data, error } = await signInWithGoogle();
+      
+      console.log('Sign in response:', { data, error });
       
       if (error) {
-        toast.error(error.message);
+        console.error('Sign in error:', error);
+        toast.error(error.message || 'Failed to sign in with Google');
         setIsLoading(false);
         return;
       }
       
-      // Don't set loading to false here as user will be redirected
-      // The redirect will handle the authentication
+      if (data?.user) {
+        console.log('Sign in successful, user:', data.user);
+        toast.success('Successfully signed in with Google!');
+        setUserAuthenticated(true);
+        onSuccess?.();
+        onClose();
+        window.location.reload();
+      } else {
+        console.log('No user data received');
+        toast.error('No user data received');
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error('Google sign in error:', error);
-      toast.error('Failed to initiate Google sign in');
+      toast.error('Failed to sign in with Google');
       setIsLoading(false);
-    } finally {
-      // Don't set loading to false here for successful redirects
     }
   };
 

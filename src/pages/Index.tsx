@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { getUserPlan, canUseBackgroundRemoval, incrementBackgroundRemovalUsage, getPlanLimits } from '@/utils/planManager';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
-import { isUserAuthenticated, incrementGuestBackgroundRemovalUsage, getGuestRemainingRemovals } from '@/utils/planManager';
+import { isUserAuthenticated, incrementGuestBackgroundRemovalUsage, getGuestRemainingRemovals, resetGuestUsage } from '@/utils/planManager';
 import ManualEditor from '@/components/ManualEditor';
 import BackgroundEffects from '@/components/BackgroundEffects';
 import PlanLimitModal from '@/components/PlanLimitModal';
@@ -27,6 +27,7 @@ const Index = () => {
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMessage, setAuthMessage] = useState<string>('');
+  const [downloadFormat, setDownloadFormat] = useState<'png' | 'jpg' | 'webp'>('png');
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -68,48 +69,58 @@ const Index = () => {
   };
 
   const handleRemoveBackground = async () => {
-    if (!uploadedFile) return;
+    console.log('Remove background button clicked');
+    console.log('Uploaded file:', uploadedFile);
+    
+    if (!uploadedFile) {
+      console.log('No uploaded file found');
+      return;
+    }
     
     const isAuthenticated = isUserAuthenticated();
+    console.log('User authenticated:', isAuthenticated);
     
+    // Check usage limits before processing
     if (!isAuthenticated) {
       // For guest users, check guest limit
       if (!incrementGuestBackgroundRemovalUsage()) {
+        console.log('Guest usage limit exceeded');
         setShowPlanLimitModal(true);
         return;
       }
     } else {
       // For authenticated users, check their plan
       if (!canUseBackgroundRemoval()) {
+        console.log('User plan limit exceeded');
         setShowPlanLimitModal(true);
         return;
       }
     }
     
-    if (isAuthenticated && !canUseBackgroundRemoval()) {
-      setShowPlanLimitModal(true);
-      return;
-    }
-    
+    console.log('Starting background removal process...');
     setIsProcessing(true);
     setError('');
     
     try {
+      console.log('Loading image...');
       const imageElement = await loadImage(uploadedFile);
+      console.log('Image loaded, starting background removal...');
       const processedBlob = await removeBackground(imageElement);
       
       if (!processedBlob || processedBlob.size === 0) {
         throw new Error('Background removal returned empty result');
       }
       
-      incrementBackgroundRemovalUsage();
-      if (!isAuthenticated) {
-        // Already incremented guest usage above
-      } else {
+      console.log('Background removal successful, blob size:', processedBlob.size);
+      
+      // Only increment usage for authenticated users (guest usage already incremented above)
+      if (isAuthenticated) {
         incrementBackgroundRemovalUsage();
       }
+      
       const processedUrl = URL.createObjectURL(processedBlob);
       setProcessedImage(processedUrl);
+      console.log('Processed image URL created');
     } catch (err) {
       console.error('Error during background removal:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to remove background';
@@ -162,18 +173,38 @@ const Index = () => {
       canvas.height = height;
       ctx.drawImage(img, 0, 0, width, height);
 
+      // Determine MIME type and quality based on format
+      let mimeType = 'image/png';
+      let qualityValue = 1.0;
+      
+      switch (downloadFormat) {
+        case 'jpg':
+          mimeType = 'image/jpeg';
+          qualityValue = 0.9;
+          break;
+        case 'webp':
+          mimeType = 'image/webp';
+          qualityValue = 0.9;
+          break;
+        case 'png':
+        default:
+          mimeType = 'image/png';
+          qualityValue = 1.0;
+          break;
+      }
+
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `background-removed-${quality}.png`;
+          link.download = `background-removed-${quality}.${downloadFormat}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
         }
-      }, 'image/png');
+      }, mimeType, qualityValue);
     };
     img.src = imageUrl;
   };
@@ -256,60 +287,70 @@ const Index = () => {
       />
       
       {/* Hero Section */}
-      <section className="hero-section section-padding">
+      <section className="hero-section section-padding pt-16 bg-black">
         <div className="container-max">
-          <div className="grid lg:grid-cols-2 gap-16 items-center min-h-screen">
-            {/* Left Side - Content */}
-            <div className="space-y-8">
-              <h2 className="hero-title text-4xl md:text-6xl text-white leading-tight">
+          <div className="grid lg:grid-cols-3 gap-8 items-center min-h-[80vh]">
+            {/* Left Side - Text Content */}
+            <div className="space-y-6">
+              <h2 className="hero-title text-4xl md:text-6xl text-white leading-tight animate-fade-in">
                 Remove Image
-                <span className="block bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
+                <span className="block bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent animate-gradient">
                   Background
                 </span>
               </h2>
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="feature-badge px-4 py-2 rounded-full text-base font-semibold text-white">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="feature-badge px-3 py-1 rounded-full text-sm font-semibold text-white">
                   100% Automatically and
                 </span>
-                <span className="green-highlight px-4 py-2 rounded-full text-base font-bold text-green-400">
+                <span className="green-highlight px-3 py-1 rounded-full text-sm font-bold text-green-400">
                   Free
                 </span>
               </div>
-              <p className="hero-subtitle text-lg md:text-xl text-gray-300 leading-relaxed">
+              <p className="hero-subtitle text-sm text-gray-300 leading-relaxed">
                 Upload your images and let our advanced AI remove backgrounds instantly. 
                 Perfect for e-commerce, social media, and professional use.
               </p>
               
               {/* Features */}
               <div className="flex flex-wrap gap-4">
-                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full">
-                  <Zap className="w-4 h-4 text-green-500" />
+                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in">
+                  <Zap className="w-4 h-4 text-white animate-pulse" />
                   <span className="text-white font-medium">Lightning Fast</span>
                 </div>
-                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full">
-                  <Shield className="w-4 h-4 text-green-500" />
+                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in" style={{animationDelay: '0.1s'}}>
+                  <Shield className="w-4 h-4 text-white animate-pulse" />
                   <span className="text-white font-medium">100% Secure</span>
                 </div>
-                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full">
-                  <Star className="w-4 h-4 text-green-400" />
+                <div className="feature-badge flex items-center gap-2 px-4 py-2 rounded-full hover:scale-105 transition-transform duration-300 animate-bounce-in" style={{animationDelay: '0.2s'}}>
+                  <Star className="w-4 h-4 text-white animate-pulse" />
                   <span className="text-white font-medium">HD Quality</span>
                 </div>
               </div>
-              
-              {/* Mode Toggle */}
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  disabled
-                  className="px-6 py-3 text-base font-semibold rounded-full transition-all mode-toggle opacity-50 cursor-not-allowed"
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  AI Generate - Coming Soon
-                </Button>
+            </div>
+            
+            {/* Middle - Image Card with Split Background */}
+            <div className="relative flex justify-center">
+              <div className="relative w-full max-w-sm aspect-[3/4] rounded-2xl shadow-2xl overflow-hidden">
+                {/* Split background */}
+                <div className="absolute inset-0 flex">
+                  <div className="w-1/2 bg-white"></div>
+                  <div className="w-1/2 bg-blue-600"></div>
+                </div>
+                {/* Animated GIF placed on top of the split background */}
+                <img 
+                  src="/banner-animated.gif" 
+                  alt="Background Removal Demo" 
+                  className="relative z-10 w-full h-full object-cover"
+                />
               </div>
             </div>
             
             {/* Right Side - Preview */}
             <div className="relative">
+              {/* Decorative elements like remove.bg */}
+              <div className="absolute -top-8 -right-8 w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full opacity-30 -z-10"></div>
+              <div className="absolute top-1/2 -left-4 w-8 h-8 bg-gradient-to-br from-green-400 to-green-500 rounded-full opacity-40 -z-10"></div>
+              <div className="absolute -bottom-8 -right-4 w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 transform rotate-45 opacity-20 -z-10"></div>
               {!uploadedImage ? (
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 border border-gray-700">
                   <input
@@ -326,15 +367,15 @@ const Index = () => {
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                   >
-                    <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center mx-auto mb-6 hover:from-green-600 hover:to-green-700 transition-all">
-                      <Upload className="w-16 h-16 text-white" />
+                    <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-3xl flex items-center justify-center mx-auto mb-6 hover:from-green-600 hover:to-green-700 transition-all">
+                      <Upload className="w-12 h-12 text-white" />
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-4">Ready to Start?</h3>
                     <p className="text-gray-300 mb-6">
                       Upload your image and start removing backgrounds instantly with our AI-powered tool.
                     </p>
                     <div className="space-y-4">
-                      <Button className="btn-primary w-full py-3 text-lg font-semibold rounded-full">
+                      <Button className="btn-primary w-full py-3 text-lg font-bold rounded-full">
                         Start Creating
                       </Button>
                     </div>
@@ -369,6 +410,16 @@ const Index = () => {
                       ) : (
                         'Remove BG'
                       )}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        resetGuestUsage();
+                        window.location.reload();
+                      }}
+                      size="sm"
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-full"
+                    >
+                      Reset Usage
                     </Button>
                     {processedImage && (
                       <>
@@ -454,31 +505,58 @@ const Index = () => {
                       </div>
                       
                       <h4 className="text-sm font-medium text-gray-300">Download Options</h4>
-                      <div className="grid grid-cols-3 gap-2">
-                        <Button
-                          onClick={() => downloadImage(processedImage, 'low')}
-                          size="sm"
-                          className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
-                        >
-                          <Download className="w-3 h-3 mr-1" />
-                          Low
-                        </Button>
-                        <Button
-                          onClick={() => downloadImage(processedImage, 'medium')}
-                          size="sm"
-                          className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
-                        >
-                          <Download className="w-3 h-3 mr-1" />
-                          Medium
-                        </Button>
-                        <Button
-                          onClick={() => downloadImage(processedImage, 'high')}
-                          size="sm"
-                          className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
-                        >
-                          <Download className="w-3 h-3 mr-1" />
-                          HD
-                        </Button>
+                      
+                      {/* Format Selection */}
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-400">Format:</p>
+                        <div className="flex gap-1">
+                          {(['png', 'jpg', 'webp'] as const).map((format) => (
+                            <Button
+                              key={format}
+                              onClick={() => setDownloadFormat(format)}
+                              size="sm"
+                              variant={downloadFormat === format ? "default" : "outline"}
+                              className={`text-xs px-3 py-1 ${
+                                downloadFormat === format
+                                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                                  : 'border-gray-600 text-gray-300 hover:bg-gray-800'
+                              }`}
+                            >
+                              {format.toUpperCase()}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Quality Selection */}
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-400">Quality:</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button
+                            onClick={() => downloadImage(processedImage, 'low')}
+                            size="sm"
+                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            Low
+                          </Button>
+                          <Button
+                            onClick={() => downloadImage(processedImage, 'medium')}
+                            size="sm"
+                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            Medium
+                          </Button>
+                          <Button
+                            onClick={() => downloadImage(processedImage, 'high')}
+                            size="sm"
+                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            HD
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}

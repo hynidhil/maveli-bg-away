@@ -3,6 +3,7 @@ import { Menu, X, Zap, Shield, Star, User, LogOut, Crown, Settings } from 'lucid
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { isUserAuthenticated, getUserPlan, resetPlan } from '@/utils/planManager';
+import { signOut } from '@/utils/supabasePlanManager';
 import AuthModal from './AuthModal';
 import PlanLimitModal from './PlanLimitModal';
 
@@ -14,8 +15,8 @@ const Header = () => {
   const isAuthenticated = isUserAuthenticated();
   const userPlan = getUserPlan();
   
-  const handleSignOut = () => {
-    localStorage.removeItem('isAuthenticated');
+  const handleSignOut = async () => {
+    await signOut();
     resetPlan();
     window.location.reload();
   };
@@ -27,7 +28,7 @@ const Header = () => {
           <div className="flex items-center justify-between">
             {/* Logo/Brand */}
             <div className="flex items-center">
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent">
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-400 to-green-500 bg-clip-text text-transparent animate-gradient hover:scale-105 transition-transform duration-300 cursor-pointer">
                 ClearPix
               </h1>
             </div>

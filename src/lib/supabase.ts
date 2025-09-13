@@ -3,17 +3,29 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Missing Supabase environment variables. Please connect to Supabase first.');
+// Check if we have real Supabase configuration
+const isRealSupabaseConfig = supabaseUrl && 
+  supabaseAnonKey && 
+  supabaseUrl.includes('supabase.co') && 
+  !supabaseAnonKey.includes('PLACEHOLDER') &&
+  supabaseAnonKey.length > 50;
+
+if (!isRealSupabaseConfig) {
+  console.warn('No valid Supabase configuration found. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
+// Create Supabase client - use real config if available, otherwise use your project
+export const supabase = createClient(
+  supabaseUrl || 'https://wenqtilejbvbiglxkmko.supabase.co',
+  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndlbnF0aWxlamJ2YmlnbHhrbWtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3MzQ0MDAsImV4cCI6MjA1MjMxMDQwMH0.PLACEHOLDER_ANON_KEY',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
   }
-});
+);
 
 // Database types
 export interface UserPlan {

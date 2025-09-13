@@ -139,7 +139,7 @@ export const getRemainingBackgroundRemovals = (): number => {
 export const incrementGuestBackgroundRemovalUsage = (): boolean => {
   const guestUsage = parseInt(localStorage.getItem('guestBackgroundRemovals') || '0');
   
-  if (guestUsage >= 1) {
+  if (guestUsage >= 5) { // Increased guest limit to 5 for testing
     return false; // Limit reached
   }
   
@@ -149,7 +149,7 @@ export const incrementGuestBackgroundRemovalUsage = (): boolean => {
 
 export const getGuestRemainingRemovals = (): number => {
   const guestUsage = parseInt(localStorage.getItem('guestBackgroundRemovals') || '0');
-  return Math.max(0, 1 - guestUsage);
+  return Math.max(0, 5 - guestUsage); // Updated to match new limit
 };
 
 export const isUserAuthenticated = (): boolean => {
@@ -158,6 +158,11 @@ export const isUserAuthenticated = (): boolean => {
 
 export const setUserAuthenticated = (authenticated: boolean): void => {
   localStorage.setItem('isAuthenticated', authenticated.toString());
+};
+
+export const resetGuestUsage = (): void => {
+  localStorage.setItem('guestBackgroundRemovals', '0');
+  console.log('Guest usage counter reset to 0');
 };
 export const upgradeToPremium = (): void => {
   const premiumPlan: UserPlan = {

@@ -23,6 +23,7 @@ const BatchImageUploader = () => {
   const [showBackgroundEffects, setShowBackgroundEffects] = useState<string | null>(null);
   const [showComparison, setShowComparison] = useState<{ [key: string]: boolean }>({});
   const [showPlanLimitModal, setShowPlanLimitModal] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState<'png' | 'jpg' | 'webp'>('png');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_IMAGES = 3;
@@ -194,18 +195,38 @@ const BatchImageUploader = () => {
       canvas.height = height;
       ctx.drawImage(img, 0, 0, width, height);
 
+      // Determine MIME type and quality based on format
+      let mimeType = 'image/png';
+      let qualityValue = 1.0;
+      
+      switch (downloadFormat) {
+        case 'jpg':
+          mimeType = 'image/jpeg';
+          qualityValue = 0.9;
+          break;
+        case 'webp':
+          mimeType = 'image/webp';
+          qualityValue = 0.9;
+          break;
+        case 'png':
+        default:
+          mimeType = 'image/png';
+          qualityValue = 1.0;
+          break;
+      }
+
       canvas.toBlob((blob) => {
         if (blob) {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = filename;
+          link.download = filename.replace(/\.[^/.]+$/, `.${downloadFormat}`);
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
         }
-      }, 'image/png');
+      }, mimeType, qualityValue);
     };
     img.src = imageUrl;
   };
@@ -431,32 +452,57 @@ const BatchImageUploader = () => {
 
               {/* Download Options */}
               {image.processedUrl && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Download Quality:</p>
-                  <div className="grid grid-cols-3 gap-1">
-                    <Button
-                      onClick={() => downloadImage(image.processedUrl!, `low-${image.file.name}`, 'low')}
-                      size="sm"
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      Low (800px)
-                    </Button>
-                    <Button
-                      onClick={() => downloadImage(image.processedUrl!, `med-${image.file.name}`, 'medium')}
-                      size="sm"
-                      variant="outline"
-                      className="text-xs"
-                    >
-                      Med (1080p)
-                    </Button>
-                    <Button
-                      onClick={() => downloadImage(image.processedUrl!, `hd-${image.file.name}`, 'high')}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-xs"
-                    >
-                      {getPlanLimits(getUserPlan().type).hdDownloads ? 'HD (Full)' : 'HD 🔒'}
-                    </Button>
+                <div className="space-y-3">
+                  {/* Format Selection */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-400">Format:</p>
+                    <div className="flex gap-1">
+                      {(['png', 'jpg', 'webp'] as const).map((format) => (
+                        <Button
+                          key={format}
+                          onClick={() => setDownloadFormat(format)}
+                          size="sm"
+                          variant={downloadFormat === format ? "default" : "outline"}
+                          className={`text-xs px-2 py-1 ${
+                            downloadFormat === format
+                              ? 'bg-green-600 hover:bg-green-700 text-white'
+                              : 'border-gray-600 text-gray-300 hover:bg-gray-800'
+                          }`}
+                        >
+                          {format.toUpperCase()}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quality Selection */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-400">Quality:</p>
+                    <div className="grid grid-cols-3 gap-1">
+                      <Button
+                        onClick={() => downloadImage(image.processedUrl!, `low-${image.file.name}`, 'low')}
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        Low (800px)
+                      </Button>
+                      <Button
+                        onClick={() => downloadImage(image.processedUrl!, `med-${image.file.name}`, 'medium')}
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        Med (1080p)
+                      </Button>
+                      <Button
+                        onClick={() => downloadImage(image.processedUrl!, `hd-${image.file.name}`, 'high')}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-xs"
+                      >
+                        {getPlanLimits(getUserPlan().type).hdDownloads ? 'HD (Full)' : 'HD 🔒'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
