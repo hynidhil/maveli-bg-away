@@ -28,13 +28,23 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     let height = imageElement.naturalHeight;
     
     if (isMobile) {
-      // Limit canvas size for mobile to prevent memory issues
-      const maxDimension = 2048;
+      // More aggressive resizing for mobile to prevent memory issues
+      const maxDimension = 1536; // Reduced from 2048
       if (width > maxDimension || height > maxDimension) {
         const ratio = Math.min(maxDimension / width, maxDimension / height);
         width = Math.floor(width * ratio);
         height = Math.floor(height * ratio);
         console.log(`Mobile optimization: resized to ${width}x${height}`);
+      }
+      
+      // Additional mobile memory optimization
+      const totalPixels = width * height;
+      const maxPixels = 1024 * 1024; // 1MP limit for mobile
+      if (totalPixels > maxPixels) {
+        const scaleFactor = Math.sqrt(maxPixels / totalPixels);
+        width = Math.floor(width * scaleFactor);
+        height = Math.floor(height * scaleFactor);
+        console.log(`Mobile memory optimization: further resized to ${width}x${height}`);
       }
     }
     
@@ -60,9 +70,9 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     });
 
     // Check file size with mobile-specific limits
-    const maxFileSize = isMobile ? 5 * 1024 * 1024 : MAX_FILE_SIZE; // 5MB for mobile, 12MB for desktop
+    const maxFileSize = isMobile ? 3 * 1024 * 1024 : MAX_FILE_SIZE; // 3MB for mobile, 12MB for desktop
     if (imageBlob.size > maxFileSize) {
-      throw new Error(`Image file is too large. Please use an image smaller than ${isMobile ? '5MB' : '12MB'}.`);
+      throw new Error(`Image file is too large. Please use an image smaller than ${isMobile ? '3MB' : '12MB'}.`);
     }
 
     console.log(`Processing image with Remove.bg API (${Math.round(imageBlob.size / 1024)}KB)...`);
@@ -82,7 +92,7 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
 
     // Mobile-optimized API request with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), isMobile ? 45000 : 30000); // 45s for mobile, 30s for desktop
+    const timeoutId = setTimeout(() => controller.abort(), isMobile ? 60000 : 30000); // 60s for mobile, 30s for desktop
 
     try {
       const response = await fetch('https://api.remove.bg/v1.0/removebg', {

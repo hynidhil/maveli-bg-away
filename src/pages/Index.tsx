@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { getUserPlan, canUseBackgroundRemoval, incrementBackgroundRemovalUsage, getPlanLimits } from '@/utils/planManager';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
 import { isUserAuthenticated, incrementGuestBackgroundRemovalUsage, getGuestRemainingRemovals, resetGuestUsage } from '@/utils/planManager';
+import { isMobile, getMobileFileSizeLimit, getMobileImageDimensionLimit, optimizeImageForMobile, getMobileErrorMessage } from '@/utils/mobileUtils';
 import ManualEditor from '@/components/ManualEditor';
 import BackgroundEffects from '@/components/BackgroundEffects';
 import PlanLimitModal from '@/components/PlanLimitModal';
@@ -31,7 +32,7 @@ const Index = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
@@ -42,46 +43,56 @@ const Index = () => {
     }
     
     // Mobile-specific file size limits
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const maxSize = isMobile ? 5 * 1024 * 1024 : 10 * 1024 * 1024; // 5MB for mobile, 10MB for desktop
+    const maxSize = getMobileFileSizeLimit();
     
     if (file.size > maxSize) {
-      setError(`Image file is too large. Please use an image smaller than ${isMobile ? '5MB' : '10MB'}.`);
+      setError(`Image file is too large. Please use an image smaller than ${isMobile() ? '3MB' : '10MB'}.`);
       return;
     }
     
-    // Check image dimensions for mobile
-    const img = new Image();
-    img.onload = () => {
-      const maxDimension = isMobile ? 2048 : 4096;
-      if (img.naturalWidth > maxDimension || img.naturalHeight > maxDimension) {
-        setError(`Image dimensions too large for mobile. Please use an image smaller than ${maxDimension}x${maxDimension} pixels.`);
-        return;
-      }
+    try {
+      // Optimize image for mobile if needed
+      const optimizedFile = await optimizeImageForMobile(file);
       
-      // Proceed with file processing
-      setUploadedFile(file);
-      resetRetryCount(); // Reset retry count for new image
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string);
-        setProcessedImage('');
-        setError('');
-        setShowManualEditor(false);
-        setShowBackgroundEffects(false);
-        setShowComparison(false);
+      // Check image dimensions for mobile
+      const img = new Image();
+      img.onload = () => {
+        const maxDimension = getMobileImageDimensionLimit();
+        if (img.naturalWidth > maxDimension || img.naturalHeight > maxDimension) {
+          setError(`Image dimensions too large for mobile. Please use an image smaller than ${maxDimension}x${maxDimension} pixels.`);
+          return;
+        }
+        
+        // Proceed with file processing
+        setUploadedFile(optimizedFile);
+        resetRetryCount(); // Reset retry count for new image
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setUploadedImage(e.target?.result as string);
+          setProcessedImage('');
+          setError('');
+          setShowManualEditor(false);
+          setShowBackgroundEffects(false);
+          setShowComparison(false);
+        };
+        reader.onerror = () => {
+          setError('Failed to read image file. Please try again.');
+        };
+        reader.readAsDataURL(optimizedFile);
       };
-      reader.onerror = () => {
-        setError('Failed to read image file. Please try again.');
+      
+      img.onerror = () => {
+        setError('Invalid image file. Please select a valid image.');
       };
-      reader.readAsDataURL(file);
-    };
-    
-    img.onerror = () => {
-      setError('Invalid image file. Please select a valid image.');
-    };
-    
-    img.src = URL.createObjectURL(file);
+      
+      // Mobile-optimized image loading
+      img.crossOrigin = 'anonymous';
+      img.src = URL.createObjectURL(optimizedFile);
+      
+    } catch (error) {
+      console.error('Error optimizing image for mobile:', error);
+      setError('Failed to process image. Please try again.');
+    }
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -114,7 +125,20 @@ const Index = () => {
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
     event.preventDefault();
     // Trigger file input on mobile touch
-    document.getElementById('hero-file-input')?.click();
+    const fileInput = document.getElementById('hero-file-input') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  };
+
+  // Enhanced mobile file input handling
+  const handleMobileFileUpload = () => {
+    const fileInput = document.getElementById('hero-file-input') as HTMLInputElement;
+    if (fileInput) {
+      // Clear previous value to ensure change event fires
+      fileInput.value = '';
+      fileInput.click();
+    }
   };
 
   const handleRemoveBackground = async () => {
@@ -152,8 +176,7 @@ const Index = () => {
     setError('');
     
     // Mobile-specific timeout and error handling
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const timeoutDuration = isMobile ? 60000 : 30000; // 60s for mobile, 30s for desktop
+    const timeoutDuration = isMobile() ? 60000 : 30000; // 60s for mobile, 30s for desktop
     
     try {
       console.log('Loading image...');
@@ -200,17 +223,7 @@ const Index = () => {
       let errorMessage = 'Failed to remove background';
       
       if (err instanceof Error) {
-        if (err.message.includes('timeout')) {
-          errorMessage = 'Processing took too long. Please try with a smaller image or better internet connection.';
-        } else if (err.message.includes('API')) {
-          errorMessage = 'Service temporarily unavailable. Please try again in a moment.';
-        } else if (err.message.includes('size') || err.message.includes('large')) {
-          errorMessage = 'Image too large for mobile processing. Please use a smaller image (under 5MB).';
-        } else if (err.message.includes('format')) {
-          errorMessage = 'Unsupported image format. Please use JPG, PNG, or WEBP.';
-        } else {
-          errorMessage = err.message;
-        }
+        errorMessage = getMobileErrorMessage(err);
       }
       
       setError(errorMessage);
@@ -480,7 +493,7 @@ const Index = () => {
                   
                   <div 
                     className="text-center cursor-pointer touch-manipulation"
-                    onClick={() => document.getElementById('hero-file-input')?.click()}
+                    onClick={handleMobileFileUpload}
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                     onTouchStart={handleTouchStart}
@@ -508,7 +521,7 @@ const Index = () => {
                       <span className="text-xs text-gray-400">{getRemainingText()}</span>
                     </div>
                     <Button
-                      onClick={() => document.getElementById('hero-file-input')?.click()}
+                      onClick={handleMobileFileUpload}
                       size="sm"
                       className="bg-blue-600 hover:bg-blue-700 text-white rounded-full"
                     >

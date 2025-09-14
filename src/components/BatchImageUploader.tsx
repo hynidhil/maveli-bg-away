@@ -3,6 +3,7 @@ import { Upload, X, Download, Pencil, Loader, RotateCcw, Trash2, Eye, EyeOff } f
 import { Button } from '@/components/ui/button';
 import { removeBackground, loadImage } from '@/utils/backgroundRemoval';
 import { canUseBackgroundRemoval, incrementBackgroundRemovalUsage, getPlanLimits, getUserPlan } from '@/utils/planManager';
+import { isMobile, getMobileFileSizeLimit, getMobileErrorMessage } from '@/utils/mobileUtils';
 import ManualEditor from '@/components/ManualEditor';
 import BackgroundEffects from '@/components/BackgroundEffects';
 import PlanLimitModal from '@/components/PlanLimitModal';
@@ -45,7 +46,22 @@ const BatchImageUploader = () => {
       return;
     }
 
-    const newImages: ImageData[] = imageFiles.map(file => ({
+    // Mobile-specific file validation
+    const maxSize = getMobileFileSizeLimit();
+    
+    const validImages = imageFiles.filter(file => {
+      if (file.size > maxSize) {
+        console.warn(`File ${file.name} is too large for mobile (${Math.round(file.size / 1024 / 1024)}MB)`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validImages.length !== imageFiles.length) {
+      alert(`Some images were too large for mobile. Only ${validImages.length} images will be processed.`);
+    }
+
+    const newImages: ImageData[] = validImages.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       file,
       originalUrl: URL.createObjectURL(file),
@@ -124,13 +140,7 @@ const BatchImageUploader = () => {
       let errorMessage = 'Failed to remove background';
       
       if (error instanceof Error) {
-        if (error.message.includes('quota exceeded')) {
-          errorMessage = 'API quota exceeded - using local processing';
-        } else if (error.message.includes('too large')) {
-          errorMessage = 'Image too large (max 12MB)';
-        } else {
-          errorMessage = error.message;
-        }
+        errorMessage = getMobileErrorMessage(error);
       }
       
       setImages(prev => prev.map(img => 
@@ -321,7 +331,7 @@ const BatchImageUploader = () => {
         />
         
         <div 
-          className="border-2 border-dashed border-green-500/30 rounded-lg p-12 cursor-pointer hover:border-green-500/50 transition-colors"
+          className="border-2 border-dashed border-green-500/30 rounded-lg p-12 cursor-pointer hover:border-green-500/50 transition-colors touch-manipulation"
           onClick={() => fileInputRef.current?.click()}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
